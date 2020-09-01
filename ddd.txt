@@ -1,0 +1,68 @@
+> -g option is used to compile source files in debug mode.
+> ulimit -c unlimited needed to generate core file.
+   gdb <core_file> <exe_file>
+
+gdb commands list
+=================
+
+How to attach a progra to gfb?
+
+Method-1: if process is running then we can get pid.
+> gdb <pid>  or gdb `pid of proc_nam`
+
+> gdb
+> attach pid
+
+Method-2: if process is not running then we need to run explicitily after attaching with gdb.
+> gdb a.out
+> run
+
+Breakpoints:
+
+1. b line_number
+   b file.cpp:21
+   b func
+   b class::func
+
+2. info b
+
+3. disable b1
+   enable b1
+
+4. delete b1
+
+Conditional Breakpoints: break points created on some condition
+
+b func if a < 10   // a is arg of func
+
+Watchpoints: watch points are specific to variable, watchpoint is set on variable.
+watch j if j < 10    // It will keep on breaking the execution when j will become less than 10 and will print
+                     // old value and new value at every execution break.
+
+> c : continue
+> n : jump to next line
+> s : jump to next step (jump inside the function call)
+> i : jump to next instructtion
+> list : list line of source code
+> p var : print the variable value
+> set var = set : variable to specific value
+> info args : displays all argument values of current function.
+> info locals: displays all local variable values of current function. 
+> bt : back trace of call stack functions with frame number
+> f <frame_num> : jump to any frame of function call stacki
+
+
+Qn: What will happen if code is not compiled by -g option?
+    
+Ans: If code is not compiled by -g option and we will try to list line numbers or print any variable value then
+     error will thrown as: no symbol table information or symbol table is not loaded.
+
+Qn: How multithreaded program is debugged.
+
+Ans: thread info : it lists out all threads with thread id. Main thread has always thread is as 1.
+     We can switch to different threads by thread id.
+     thread <tid> : switch to specific thread
+
+Qn: How to move to GUI mode from command line mode?
+
+Ans: tui enable    [tui: text user mode]

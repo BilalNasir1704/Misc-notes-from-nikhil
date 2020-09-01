@@ -1,0 +1,315 @@
+/*Program to print size of any data type object*/
+
+#include<iostream>
+#define size_of(type) (char*)(&type+1) - (char*)&type
+using namespace std;
+int main()
+{
+   int x;
+   printf("%d" , size_of(x));
+   return 0;
+}
+
+/*Program to Add two numbers using bitwise operation.*/
+
+/*Addition is based on Half adder.*/
+#include<iostream>
+using namespace std;
+int Add(int x, int y)
+{
+   while (y != 0)
+   {
+       int carry =  x & y;
+       cout<<"carry : " <<carry <<endl;
+       x = x ^ y;
+       y = carry<< 1;
+       
+       cout<< " Y : " <<y <<endl;
+   }  
+   return x;
+}
+int main()
+{
+  int x= 9 , y = 7;
+  cout<<x << " + " << y << " = " << Add(x , y)<<endl;
+  return 0;
+}
+
+/*Find sqrt without using arithmetic operator*/
+
+#include<iostream>
+using namespace std;
+int sqrt(int num)
+{
+   int i = 1;
+   int count = 0;
+   while(num > 0)
+   {
+      num = num - i;
+      count++;
+      i = i + 2;
+   } 
+    
+   if ( num == 0 ) 
+     return count;
+   else 
+     return 0;
+}
+
+int main()
+{
+  int x= 64;
+  cout<<sqrt(x)<<endl;
+  return 0;
+}
+
+/*Program to find Number of set bits*/
+
+#include<iostream>
+using namespace std;
+
+int countSetBits(int num)
+{
+   int count = 0;
+   while ( num)
+   {
+     count += num & 1;
+     num >>= 1;
+   }
+   return count;
+}
+int main()
+{
+  cout<<"Bit Count : " <<  countSetBits(15)<<endl;
+  return 0;
+}
+
+/*Program to print all the bits of a  variable*/
+
+#include<iostream>
+using namespace std;
+void printBits(int num, unsigned int i)
+{
+   if ( i == sizeof(num)*8 )
+   {
+       return; 
+   }
+   int temp = num >> 1;
+   printBits(temp , ++i);
+   if (num & 1)
+         cout<< "1";
+   else
+         cout<<"0";
+   num >>= 1;
+   return;
+}
+
+int main()
+{
+  printBits(15 , 0);
+  return 0;
+}
+
+/*Swap even bits of a num with odd bits*/
+
+#include<iostream>
+using namespace std;
+
+int main()
+{
+   unsigned int x = 5; 
+   unsigned int even_bits = x & 0xAAAA;
+   unsigned int odd_bits  = x & 0x5555;
+   even_bits >>= 1;
+   odd_bits <<= 1;
+   cout<< (even_bits | odd_bits)<<endl;
+   return  0;
+}
+
+/************** Own Memset*****************************/
+
+void* my_memset(void *src , int x,  size_t size)
+{
+    unsigned char *loc = (unsigned char*)src;
+    unsigned int i = 0;
+    while( i < size)
+    {
+         *loc = (unsigned char)x;
+         loc++;
+         i++; 
+    }  
+    return src;
+}
+
+int main()
+{
+   int x ;
+   my_memset(&x , 1 , sizeof(x));
+   printf("%d", x);
+   return 0;
+}
+
+/************* Own memcpy implementation *******************************/
+void* my_memcpy(void *dest , void *src,  size_t size)
+{
+    char *sr = (char*)src;
+    char *dst = (char*) dest;
+    while(size--)
+    {
+        *dst = *sr;
+        sr++; dst++; 
+    }
+    return src;
+}
+int main()
+{
+   int x = 10 , y = 89;
+   my_memcpy(&x , &y , sizeof(x));
+   cout<< x <<" " << y <<" "  << &x << " "  <<&y;
+   return 0;
+}
+
+
+/*****************multiply two numbers using only Bitwise operators ****************/
+
+#include<stdio.h>
+
+main()
+{
+  int a,b,result;
+  printf("nEnter the numbers to be multiplied :");
+  scanf("%d%d",&a,&b);         // a>b
+  result=0;
+  while(b != 0)                // Iterate the loop till b==0
+  {
+    if (b&01)                  // Bitwise &  of the value of b with 01
+    {
+      result=result+a;         // Add a to result if b is odd .
+    }
+    a<<=1;                     // Left shifting the value contained in 'a' by 1
+  			       // multiplies a by 2 for each loop
+     b>>=1;                    // Right shifting the value contained in 'b' by 1.
+  }
+  printf("nResult:%d",result);
+}
+
+/*Program to compress a string by its number of sequential occurance.*/
+
+#include<iostream>
+using namespace std;
+int main()
+{
+  char str[] = "WWWWCCCADDD";
+  char newstr[100] ;
+  int i = 0,j= 0, count = 1;
+  while(str[i] != '\0')
+  {
+     if (str[i] == str[i+1])
+        count++;
+     else
+     {
+        newstr[j++] = str[i];
+        if (count != 1)
+          newstr[j++] = count + '0'; 
+        count=1;
+     }   
+     i++;
+  } 
+  newstr[j] = '\0';
+  cout<<newstr<<endl;
+  return 0;
+}
+
+
+
+/*Program to compress a string by its number of sequential occurance.*/
+
+#include <iostream>
+using namespace std;
+int main()
+{
+     char str[] = "WWWWCCCADDD";
+     char *read_ptr = str, *write_ptr = str;
+     char ch = str[0];
+     int count = 1 , i = 0;
+     while(*read_ptr != '\0')
+     {
+        *write_ptr  = ch;
+        if (*(++read_ptr) == ch)
+           count++;
+        else
+        {
+           *(write_ptr+1) = count + '0';
+           write_ptr += 2;
+           ch = *read_ptr;
+           count = 1;
+        }  
+     }     
+     *write_ptr = '\0';
+     cout<<str<<endl;
+     return 0;
+}
+
+/**************** Virtual Function Implementation In C ***************************/
+
+struct A;
+
+typedef struct {
+    void (*A)(struct A*);
+    void (*update)(struct A*);
+    int (*access)(struct A*);
+} A_functable;
+
+typedef struct A{
+    int a;
+    A_functable *vmt;
+} A;
+
+void A_A(A *this);
+void A_update(A* this);
+int A_access(A* this);
+
+A_functable A_vmt = {A_A, A_update, A_access};
+
+void A_A(A *this) {this->vmt = &A_vmt; this->a = 10;}
+void A_update(A* this) {this->a++;}
+int A_access(A* this) {this->vmt->update(this); return this->a;}
+
+/*
+class B: public A {
+public:
+    void update() {a--;}
+};
+*/
+
+struct B;
+
+typedef struct {
+    void (*B)(struct B*);
+    void (*update)(struct B*);
+    int (*access)(struct A*);
+} B_functable;
+
+typedef struct B {
+    A inherited;
+} B;
+
+void B_B(B *this);
+void B_update(B* this);
+
+B_functable B_vmt = {B_B, B_update, A_access};
+
+void B_B(B *this) {A_A(this); this->inherited.vmt = &B_vmt; }
+void B_update(B* this) {this->inherited.a--;}
+int B_access(B* this) {this->inherited.vmt->update(this); return this->inherited.a;}
+
+int main() {
+    A x;
+    B y;
+    A_A(&x);
+    B_B(&y);
+    printf("%d\n", x.vmt->access(&x));
+    printf("%d\n", y.inherited.vmt->access(&y));
+}
+
+/********************** Miscellaneous Concepts ***********************/

@@ -1,0 +1,72 @@
+1. Use lint to compile your code.
+
+2. Keep both debug and non debug version of the code.
+
+void mystrcpy(void* toStr, void* fromStr)
+{
+  char* to = (char*)toStr;
+  char* from = (char*)fromStr;
+#if DEBUG 
+  if(to == NULL || from == NULL)
+  {
+    // print log message
+    abort();
+  }
+#endif
+  while((*to++ = *from++) != '\0'){
+  }
+}
+
+void mymemcpy(void *toMem, void* fromMem, size_t size)
+{
+  byte* to = (byte*) toMem;
+  byte* from = (byte*) fromMem;
+#if DEBUG
+  if(to == NULL || from == NULL)
+  {
+    // print log
+    abort();
+  }
+#endif
+  
+  while(size-- > 0)
+  {
+   to++ = from++;
+  }
+}
+
+3. Always run unit test cases before merging your changes to master source code.
+
+4. if(2 == x); //
+5. if(flight == 063) // here leading 0 is forcing to octal number and you are checking for flight 53.
+6. if(pb != NULL & GetSomething()) // here if we wrote & instead of && then Getsomething() will get executed even if pb = NULL
+7. quote = number /* denom  // here /* will interpret as start of a comment
+8. word = bHigh<<8+Low // because of precedence rule it will become word = bHigh << (8+Low)
+9. UINT_MAX is defined limit.h and if we forget to include limits.h then the macro will contain default value as 0.
+10. strFinal = memcpy(malloc(10), "nikhil", 7);  // This will pass everywhere except once malloc will fail. In case of failre, malloc will return NULL and memcpy can't be handled. If you are lucky, crash will happen and you will see the error else after shipment customer will see for sure.
+11. 
+/***************** WHAT IS GUARDED MEMORY ALLOCATION AND WAHTS USE OF IT **********************************/
+
+
+/***************** Efficient way to write strcat/strlen **********************************************/
+
+Go throught the below code:
+// Length of str is 50
+strcat(str, str2)  // length of str2 is 100
+strcat(str, str3)  // length if str3 is 150
+........
+.......
+Each call of strcat, pointer will be traverse till endof original string(till '\0') because it doesn't know the length of string then it will start concatenation with other string.
+It will increase the time complexity, we can see as above.
+
+If we know the original string length in begining, pointer can jump directly to end of string.
+
+So, it can we implemented as we can have some reserve bytes(1/2 byte) in begining of the array to hold string length. Whenever string will be modified, string length will be modified also. Before doing any operation where we need to traverse till end of string we can directly move by help of string length instead of moving one by one byte.
+
+
+Note: we can use the above concept for strlen also. By this implementation, we can make time complexity of strlen is o(1). Standard time complexity of strlen is o(N).
+
+Note: Other way I would prefer to have a structure/class with a integer and a character array. integer to hold the string length and character array to hold the original string.
+
+Note: Python and other advanced languages are implemented similarly.
+

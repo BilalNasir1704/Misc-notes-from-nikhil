@@ -1,0 +1,104 @@
+static int parentPipe;
+
+void pbPidFork(const char *progname, int idnum, unsigned flags, 
+               int Simulation_Run)
+{
+    const char *p; 
+    char name[1000], buf[100];
+    int fd, pid, pip[2], n;
+
+    if ((p = strrchr(progname, '/'))) progname = p;
+
+    if (Simulation_Run) {
+        char pid_dir[512] = {0}, *env = NULL;
+        const char * home_dir = getenv("HOME");
+        if(home_dir == NULL) {
+            ERR_THROW(0, "Error getting home dir of user pbPidFork(..)\n");
+        }
+        env = getenv("SIM_INSTANCE");
+        if (env) snprintf(pid_dir, sizeof(pid_dir), "/%s/%s/amat/pb-pids", home_dir, env);
+        else snprintf(pid_dir, sizeof(pid_dir), "/%s/amat/pb-pids", home_dir);
+
+        assurePidDir(pid_dir);
+        snprintf(name, sizeof(name), "%s/%s-%d.pid", pid_dir, progname, idnum);
+    } else {
+        assurePidDir(PID_DIR);
+        snprintf(name, sizeof(name), "%s/%s-%d.pid", PID_DIR, progname, idnum);
+    }
+
+    /* open lock file and set to 664 mode */
+    while ((fd = open(name, O_CREAT|O_RDWR, PID_FILE_MODE)) < 0) {
+        if (errno != EINTR) {
+            ERR_THROW(0, "error opening lock file %s: %s",
+                        name, strerror(errno));
+        }
+    }
+    while (flock(fd, LOCK_EX) < 0) {
+        if (errno != EINTR) {
+            ERR_THROW(0, "error locking lock file %s: %s",
+                        name, strerror(errno));
+        }
+    }
+    fchmod(fd, PID_FILE_MODE);  // OK to fail if old lock file not owned by me
+
+    /* read lock file, reposition file pointer to beginning, and kill old pid */
+    while ((n = read(fd, &buf, sizeof(buf)-1)) < 0) {
+        if (errno != EINTR) {
+            ERR_THROW(0, "error reading lock file %s: %s",
+                        name, strerror(errno));
+        }
+    }
+    lseek(fd, SEEK_SET, 0);
+    buf[n] = '\0';
+    if (sscanf(buf, "%d", &pid) == 1) {
+        if (tryKill(pid, progname, idnum, SIGHUP) == 0
+                && tryKill(pid, progname, idnum, SIGKILL) == 0) {
+            ERR_THROW(0, "couldn't kill old process %d (%s-%d): %s",
+                        pid, progname, idnum, strerror(errno));
+        }
+    }
+    if (flags & PBPID_KILL) exit(EXIT_SUCCESS);
+
+    /* make communication pipe, fork child, and close unused pipe ends */
+    if (pipe(pip) < 0) ERR_THROW(0, "couldn't open pipe: %s", strerror(errno));
+    if ((pid = fork()) < 0) {
+        ERR_THROW(0, "couldn't fork sub-process: %s", strerror(errno));
+    }
+    if (pid == 0) {
+        /* child process */
+        close(fd);
+        close(pip[0]);
+        parentPipe = pip[1];
+        if (flags & PBPID_CDTMP) ERR_ASSERT(chdir("/tmp") == 0);
+        if (flags & PBPID_UM2) umask(002);
+        if (flags & PBPID_CLSIN) ERR_ASSERT(freopen("/dev/null", "r", stdin));
+        if (flags & PBPID_CLSOUT) ERR_ASSERT(freopen("/dev/null", "w", stdout));
+        return;
+    } else {
+        /* parent process:  write pid, then wait for status from child */
+        close(pip[1]);
+        snprintf(buf, sizeof(buf), "%-10d\n", pid);
+        while (write(fd, buf, strlen(buf)) < 0) {
+            if (errno != EINTR) {
+                fprintf(stderr, "error writing lock file %s: %s\n",
+                            name, strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+        }
+        close(fd);
+
+        // XXX -- time out after some period?
+        while ((n = read(pip[0], buf, sizeof(buf)-1)) < 0) {
+            if (errno != EINTR) {
+                fprintf(stderr, "error reading pipe from child: %s\n",
+                            strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+        }
+        buf[n] = '\0';
+        if (sscanf(buf, "%d", &n) == 1) exit(n);
+        fprintf(stderr, "bad data read from pipe from child (%d chars): '%s'\n",
+                    n, buf);
+        exit(EXIT_FAILURE);
+    }
+}

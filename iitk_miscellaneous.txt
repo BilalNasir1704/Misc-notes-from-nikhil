@@ -1,0 +1,109 @@
+/****** Compare two doubles for equality *******************8/
+double x, y;
+
+if ( x == y)     // not good ides
+
+#define EPS 0.0000001
+if(x-EPS < y && x+EPX > y)   // best way to compare two doubles
+
+=====================================================================
+Time complexity depends only on loops.
+usually 10^6 to 10^8 loops are execured in 1 second.
+Now, with value of N, we can know which time complexity solution will suit.
+
+=====================================================================
+
+Bitwise operation are very fast. It saves lot of processing times.
+Caution: Always do bitwise operation on unsigned integers only.
+         Bitwise operation on signed integer is costly.
+
+=====================================================================
+gcd(a, b) : mx number which devides both a and b
+if(a%b == 0), gcd = b
+else
+   a = bt + r;
+   gcd(a,b) = gcd(b,r);
+            = gcd(b, a%b);
+
+lcm(a,b) = (a*b)/gcd(a,b);
+
+Time complexity = O(log(a+b))
+
+Recursive Implemetation:
+
+int gcd(int a, int b)
+{
+   if(b == 0) {
+     return a;
+   } else {
+     return gcd(a%b);
+   }
+} 
+
+Iterative Implementation:
+
+int gcd(int a, int b)
+{
+   while(b)
+   {
+      int r = a%b;
+      a = b;
+      b =r;
+   }
+   return a;
+
+
+============================================================================
+
+Comput a^n in O(logn) time
+
+int ComputePower(int a, int n)
+{
+   int x = ComputePower(a, n/2);
+   if(n & 1)  // odd number
+   {
+      return x * x * a;
+   } else {
+      return x * x;
+   }
+}
+============================================================================
+
+Modular Arithmetic:
+
+(x+y) mod n = ((x mod n) + (y mod n)) mod n
+(x-y) mod n = ((x mod n) - (y mod n)) mod n
+(x*y) mod n = (x mod n) * (y mod n) mod n
+(x/y) mod n = ((x mod n) / (y mod n)) mod n  // not always true
+(x^y) mod n = ((x mod n)^y) mod n
+}
+
+=============================================================================
+
+Prime Sieve:
+
+Composie number: It is a positive number which is not prime.
+
+Every composite number n has a prime factor(p) with below relation:
+              p <= sqrt(n)
+
+So let us assume all numbers are prime. But if we come across a prime factor of the number, we immediately 
+know that it's not a prime. If there is no prime number in the range of (2 to sqrt(number)) then number is 
+must a prime number.
+
+Implementation:
+
+int primes[n];
+for(int i = 0; i < n; i++) {
+   primes[i] = 1;
+}
+
+primes[0] = primes[1] = 0;
+for(int i = 2; i < sqrt(n); i++) 
+{
+   if(primes[i] == 1) {
+      for(int j = i*i; j < n; j += i) { // make all multiples of this prime to 0
+          primes[j] = 0;
+      }
+   }
+}

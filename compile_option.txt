@@ -1,0 +1,21 @@
+ -c   [create object file]
+ g++ -c nik.cpp    // creates nik.o
+
+ -E   [generates preprocessed file]
+ gcc -E file.c > <preprocessed_file.txt>
+
+ -S   [generates assembly code]
+ g++ -S nik.cpp  // generates nik.s assembly code // used to check tail call optimization
+
+ -O1, -O2, -O3  [ different level optimization]
+
+ -g   [enable to generate debug symbols for debugger gdb]
+
+ -wall  [generates all warning]
+
+ -werror [generates warning as error]
+
+ -w [inhibits warning]
+
+
+gcc nik.c -save-temps   // generates all files: .ii, .o and .s

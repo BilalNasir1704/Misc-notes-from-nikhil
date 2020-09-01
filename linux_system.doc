@@ -1,0 +1,283 @@
+/*********** LINUX SYSTEM NOTES ***********************/
+
+======================= FORK () CALL =========================================
+fork() called once but returns twice. It returns zero to child process for successful
+creation and child process id to parent.
+Reason: We have two function getpid() to gets own pid and getppid() to get parent process
+pid. so, child can get any time own process id and parent process id. 
+Parent can get own process id by getpid() but can't get child process id so child returns 
+process id to parent at the time of creation itself.
+
+pid = fork();
+if(pid == 0) {
+  // child
+  // we can get parent proc-id by getppid() and own proc-id by getpid()
+}
+else {
+  // parent
+}
+
+The fork operation creates a separate address space for the child. The child process has an exact copy of all 
+the memory segments of the parent process, though if copy-on-write semantics are implemented actual physical 
+memory may not be assigned (i.e., both processes may share the same physical memory segments for a while). 
+Both the parent and child processes possess the same code segments, but execute independently of each other.
+
+====================== ORPHAN PROCESS =========================================
+A process whose parent is already exited without waiting for child process.
+Then child process becomes orphan process.
+
+#include<sys/types.h>
+
+int main() 
+{
+  pid_t pid = fork();
+  if(pid >0) {  // parent process
+     // do
+  }else if (pid == 0) { // child process, if pid = -1, child is not created
+    sleep(1000);
+  }
+
+  // wait() or waitpid()  // we are not waiting here so parent will exit without waiting for child.
+}
+
+===================== ZOMBIE PROCESS ==========================================
+If a process has finished its execution but still has entry in process table becomes zombie.
+Parent process has responsibility to remove entry to its child process from process table once
+child process finishes the execution. SO, if parent process is suspended or sleeping and child process
+completes the execution, child process becomes zombie.
+
+int main()
+{
+  pid_t pid = fork();
+  if(pid > 0) {   // parent process
+     sleep(1000);
+  } else if (pid == 0) {  // child process
+  }
+}
+}
+
+Note: How to kill parent from child process?
+--------------------------------------------
+      kill(getppid(), SIGTERM); // zombie killer
+      exit(1);
+
+================= CREATE DAEMON PROCESS ========================================
+This process is a process whose parent is init only and it starts during system starts up.
+Runs as a background job to monitor something and no process has control over it.
+Ex: Some cron job, Java garbage collector
+
+int fd, pid, pip[2];
+
+/* make communication pipe, fork child, and close unused pipe ends */
+if (pipe(pip) < 0) ERR_THROW(0, "couldn't open pipe: %s", strerror(errno));
+if ((pid = fork()) < 0) {
+   ERR_THROW(0, "couldn't fork sub-process: %s", strerror(errno));
+}
+
+if (pid == 0) {
+        /* child process */
+        close(fd);
+        close(pip[0]);
+        parentPipe = pip[1];
+        // Below four lines are making child process daemon process.
+        if (flags & PID_CDTMP) ERR_ASSERT(chdir("/tmp") == 0);
+        if (flags & PID_UM2) umask(002);
+        if (flags & PID_CLSIN) ERR_ASSERT(freopen("/dev/null", "r", stdin));
+        if (flags & PID_CLSOUT) ERR_ASSERT(freopen("/dev/null", "w", stdout));
+        return;
+    } else {
+        /* parent process:  write pid, then wait for status from child */
+        close(pip[1]);
+        snprintf(buf, sizeof(buf), "%-10d\n", pid);
+        while (write(fd, buf, strlen(buf)) < 0) {
+            if (errno != EINTR) {
+                fprintf(stderr, "error writing lock file %s: %s\n",
+                            name, strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+        }
+        close(fd)
+        .......
+   }
+
+Note: If we fork the child process address space gets a copy of all opened file, socket and other resourcess.
+Even when a scipt is run from c code or from any other script. It forks internally to create a child process for running the script.
+
+/************************* DIfference between fork() and vfork() ********************************************/
+fork() - Child process and parent process has seperate address space.
+vfork() - Child process and parent process shares the same address space
+
+fork() - Parent and child process executes simultaneously.
+vfork() - Parent process remains suspended till child process completes its execution.
+
+fork() - If child process alters any page then it is invisible to parent process as both have seperate address space.
+vfork() - If child process alters any page then it is visible to parent process as both shares the same address space.
+
+fork() - fork() uses copy-on-write as an alternative where the parent and child shares same pages until any one of them modifies the shared page.
+vfork() - vfork() does not use copy-on-write.
+
+Conclusion: The vfork() system call has to be implemented when child process call exec() immediately after its creation using fork(). As separate address space for child and parent process will be of no use here.
+
+fork() creates a new process by duplicating the calling process, The new process, referred to as child, is an exact duplicate of the calling process, referred to as parent, except for the following :
+
+The child has its own unique process ID, and this PID does not match the ID of any existing process group.
+The child’s parent process ID is the same as the parent’s process ID.
+The child does not inherit its parent’s memory locks and semaphore adjustments.
+The child does not inherit outstanding asynchronous I/O operations from its parent nor does it inherit any asynchronous I/O contexts from its parent
+
+/******************************** exec family system call (fork() vs exec())******************************************/
+
+The exec() family of functions replaces the current process image with a new process image. It loads the program into the current process space and runs it from the entry point.
+
+fork starts a new process which is a copy of the one that calls it, while exec replaces the current process image with another (different) one.
+Both parent and child processes are executed simultaneously in case of fork() while Control never returns to the original program unless there is an exec() error.
+
+/******************************** program to handle signal *****************************************/
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<signal.h>
+#include<string.h>
+
+static void
+sigHandling( const int signum, siginfo_t *inf, void *val ){
+    printf("Nikhil - SIGSEGV handling routine\n");
+    exit(0);
+}
+
+int main()
+{
+  struct sigaction nfatal;
+  memset( &nfatal, 0, sizeof(nfatal) );
+  nfatal.sa_sigaction = sigHandling;
+  nfatal.sa_flags = SA_SIGINFO;
+
+  if( sigaction( SIGSEGV, &nfatal, NULL ) ) { 
+        //ERR_THROW( errno, "Nikhil -  SIGSEGV failure" );
+  }
+
+  // we can add multiple signal handling here
+  char *x = "AB";
+  *(x+1) = 'c';  // SIGGEGV, trying to modify read only memory
+  return 0;
+}
+
+/******************* Miscellaneous ***********************/
+
+pushd, popd  // used to change directory, similar to "cd" and "cd -"
+
+/******* What is difference between exit(0) and _exit(0) ? ******************/
+
+exit() does cleanup work like closing file descriptor, file stream and so on. It calls the function to clean
+       if some function is registered by atexit()
+
+_exit() doesn't call any cleanup process. It just dies on.
+
+/****** What is difference between exit(0) and exit(1) ? **********************/
+
+exit(0) behave like return 0 in main() function, exit(1) behave like return 1 . The standard is, that main 
+function return 0 , if program ended successfully while non-zero value means that program was terminated with 
+some kind of error.
+
+/****************** Format System Time *******************************************************/
+
+struct timeval time_tv;
+struct tm time_tm;
+int usec_div, usec_width;
+
+gettimeofday(&time_tv, NULL);
+localtime_r(&time_tv.tv_sec, &time_tm);
+strftime(tbuf, sizeof(tbuf), "%m-%d %T", &time_tm);
+
+/************** Create A very Standard Logging Process in multithreaded Environment ****************/
+
+/************** Create your own bash shell ************************************/
+
+It is a beautiful example fork() system call.
+
+/************* Write a code to find most recent file(with extension.xx) in a directory ****************/
+
+#define BUF_MAX 1024
+
+static void findMostRecentFile(char *dirName, char* ext, char* fBaseName)
+{
+    struct stat fStat;
+    time_t latest = 0;
+    struct dirent *dp;
+    char fName[BUF_MAX] = {0};    
+    char fPath[PATH_MAX] = {0};
+    DIR *dir = opendir(dirName);
+    if (dir) {
+        while ((dp = readdir(dir)) != NULL) {
+            memset(&fStat, 0, sizeof(fStat));
+            if (strstr(dp->d_name, ext)) {
+                snprintf(fPath, sizeof(fPath), "%s/%s", dirName, dp->d_name);
+                if (lstat(fPath, &fStat) != 0) {
+                    continue;
+                }
+                if (fStat.st_mode & S_IFREG) {
+                    if (fStat.st_mtime > latest) {
+                        // finding a more recent file switch that to latest
+                        strcpy(fName, dp->d_name);
+                        latest = fStat.st_mtime;
+                    }
+                }
+            }
+        }
+        closedir(dir);
+    }
+    // finding prefix of file name
+    char *ptr = NULL;
+    if ((strlen(fName) > 0) && (ptr = strstr(fName, ext))) {
+        snprintf(fBaseName, ptr-fName+1, "%s", fName);
+    }
+}
+
+//function call
+char* dir_name = "/home/nikhil/Desktop/my_files";
+char fbasename[BUF_MAX];  // it will be have base name of file(without extension .txt)
+findMostRecentFile(dir_name, ".txt", fbasename);
+
+==================================================================================
+/*********** Write a program which will hang the system **********************/
+==================================================================================
+
+If RAM will be full then only our computer system wiil be hanged. There could be different scenarios to hang the
+system up but this is easily achievable by a C program.
+
+#include<stdio.h>
+#include<stdlin.h>
+#include<sys/types.h>
+
+int main()
+{
+
+   while(1) {
+      fork();
+   }   
+
+   return 0;
+}
+
+/************** How to go on different system and check for some process or do abything in one line ********/
+
+1. ssh root@eye1
+2. ps -eaf  |grep eyecon // it is done on eye1 machine
+
+Above two lines are equivalent to below:
+ssh root@eye1 ps -eaf | grep eyecon
+
+/************* What is difference between md5sum and crc32 ***************************************/
+
+Both are similar and used for hash check mechanism.
+crc stands for cyclic redundancy check.
+
+MD5 is a one-way-hash algorithm. One-way-hash algorithm are often used in cryptography as they have the property (per design) that it's hard to find the input that produced a specific hash value. Specifically it's hard to make two different inputs that gives the same one-way-hash. Those they are often used as a way to show that a amount of data have not been altered intentionally since the hash code was produced. As the MD5 is a one-way-hash algorithm the emphasis is on security over speed. Unfortunately MD5 is now considered insecure.
+
+CRC32 is designed to detect accidental changes to data and are commonly used in networks and storage devices. The purpose of this algorithm is not to protect against intentionally changes , but rather to catch accidents like network errors and disk write errors etc. The emphasis of this algorithm is those more on speed than on security.
+
+md5sum test.txt
+837af110fb84f638c8e9d766a141eb8e test.txt
+
+cksum test.txt
+4122168221 423 reply.txt

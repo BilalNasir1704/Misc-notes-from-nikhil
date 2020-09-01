@@ -1,0 +1,1657 @@
+/******************* some misconception about if...else.... ******/
+1. if condition considers all statements if statements are not under braces.
+   if(1)
+     printf("nikhil");
+     printf("nikhil");
+   // It will print two times nikhil.
+
+2. if(1)
+     printf("nikhil");
+     printf("nikhil");
+   else
+     printf("vinay');
+  // It will throw error - ‘else’ without a previous ‘if’ 
+  // else is not able to recognize any if in this case
+
+3. if(1) printf("nikhil"); printf("vinay");
+   // It will print- nikhil vinay
+
+4. if(1) printf("nikhil"); printf("vinay");
+         printf("hello");
+   // It will print - nikhil vinay hello
+
+Note: Better to put always if statements under braces{} even if it is a single statement
+/******************** macro do-while(0) **************************/
+
+It's the only construct in C that you can use to #define a multistatement operation.
+#define FOO(x) foo(x); bar(x)
+if (condition)
+    FOO(x);
+else // syntax error here
+    ...;
+
+#define FOO(x) {foo(x); bar(x);}
+if (condition)
+    FOO(x);
+else // syntax error
+    ...;
+
+solution:
+#define FOO(x) \
+ do {          \
+   foo(x); bar(x);
+ }while(0)
+
+if (condition)
+    FOO(x);
+else // Ok, Fine
+    ...;
+
+/******** How to see a preprocessed file **************************/
+gcc -E file.c > <preprocessed_file.txt>
+
+/*********** Compilation flow *************************************/
+
+files are preprocessed -> object files(.o) are created -> all .o files are linked with static and dynamic library -> .exe is created.
+
+/*********** Dump class hierarrchy in c++ *************************
+
+g++ -fdump-class-hierarchy -c source_file.cpp
+
+/************* Difference between static/archive(.a) and dynamic/shared(.so) library ***********************/
+1. Shared library becomes a part of the final executable file so, it increases the size of final object file but   library function call is fast here because all are part of same object.
+2. Dynamic library doesn't become part of final executable, during compile time it checks only function declaration in attached library header file. Function gets called from shared library during runtime so, it is comparatively slow function call compared to shared object.
+
+Shared library can be shared between different processes.
+
+/************ How static library is created and read in a program **************************/
+
+Static Library creation and use:
+
+File: lib_mylib.c
+include <stdio.h> 
+void fun(void) 
+{ 
+  printf("fun() called from a static library"); 
+} 
+
+File: lib_mylib.h
+void fun(void);
+
+gcc -c lib_mylib.c -o lib_mylib.o   // compile library file
+ar rcs lib_mylib.a lib_mylib.o      // create static library file
+
+File: driver.c
+#include <lib_mylib.h>
+
+Our library is ready to use.
+gcc -c driver.c -o driver.o  // compile driver code
+gcc -o driver driver.o -L -l_mylib // -l_mylib is expanded to -lib_mylib for linking
+
+Dynamic Library creation and use:
+
+gcc -g -fPIC -Wall -Werror *.c -shared -o lib_mylib.so
+
+-g // for debug enabled option
+-fPIC // position independent code, a requitement for shared library
+-shared // this flag creates a shared library
+
+gcc -g -wall -o prog prog.c -l_mylib  // use dynamic library
+Note: The -lmylib option tells the linker, "go look for lib_mylib.so" for the library. It will also try other variants on the filename such as lib_mylib.a and _mylib.a, etc
+
+void * my_lib_handle;
+int (*some_func)();
+my_lib_handle = dlopen("lib_mylib.so",RTLD_NOW);
+if(my_lib_handle==NULL) {
+   /* ERROR HANDLING */
+}
+some_func = (int (*)()) dlsym(my_lib_handle,"some_function");
+if(some_func==NULL) {
+	/* ERROR HANDLING */
+}
+printf("Return code is %i\n",(*some_func)())
+
+/******************************************************************/
+Observations: 
+/******************************************************************/
+
+/******** FIle Operation in C *************************************/
+FILE *fp = fopen("file.txt", "r");  // "r", "a", "w", "w+" // returns NULL if file is not there or any error
+// fprintf
+// fscanf -- scanning a variable from standard file by file pointer
+             FILE *fp = open("file.txt", "r");
+             int second; char msg[64];
+             fscanf(fp, "%d %64[^\n]", &second, msg);
+Note: sscanf -- scanning a variable from string.
+             char str[50] = "2 x y z";
+             int second; char msg[64];
+             sscanf(str, "%d %64[^\n]", &second, msg);
+    
+// fputs
+// fgets
+// fgetc
+// fclose(fp) // If file is not opened or fp is NULL then this throws segmentation fault
+Note: fclose doesn't set file pointer to null so good practice is after calling fclose, make fp = NULL;
+
+// __FILE__ printed by %s, __LINE__ printed by %d, __FUNC__ printed by %s
+// snprintf
+   char buffer[50]; 
+   char* s = "geeksforgeeks";
+   int j = snprintf(buffer, 6, "%s\n", s);
+   output: buffer is "geeks" and j = 14 (total count of s string);
+// strcpy
+// strncpy
+   char * strncpy ( char * destination, const char * source, size_t num );
+// strcat
+// strncat
+   char * strncat ( char * destination, const char * source, size_t num );
+// memset
+   void *memset(void *ptr, int x, size_t n);
+// memcpy
+   void * memcpy(void *to, const void *from, size_t numBytes);
+// memmove
+   void * memmove(void *to, const void *from, size_t numBytes);
+   It can face overlapping problem.
+
+    char string [] = "stackoverflow";
+    char *first, *second;
+    first = string;
+    second = string;
+
+    memcpy(first+5, first, 7);
+    puts(first);
+    memmove(second+5, second, 7);
+    puts(second);
+
+    output:
+    stackstackovw  // output of memcpy
+    stackstackstw  // output of memmove
+
+// puts(str) -> prints on stdout
+// fputs(str, fp) -> prints on a file
+
+// difference between memcpy and memmove
+
+// Mix C code in C++ code
+extern "C" {
+  // write c code - compiler treats this part of code as c code so (overriding, overloading of fuction is not allowed and many more)
+}
+Another way:
+exter "C" void func(); // make it clear in declaration itself
+void func() {
+};
+
+
+char *p = "string"; //creates pointer to constant string
+Note: If it is used in a function then p goes on stack and memory containig "string" goes in read only data segment.
+
+Example-1: (It works fine, no compiler error/warning as "nikhil" goes in read only data segment so it is erased at function return.
+char *fun()
+{
+  char *p = "nikhil";
+  return p;
+}
+
+printf("%s\n", fun());
+
+Example-2:(It throws compiler warning as well as print garbage)
+char *fun()
+{
+  char p[] = "nikhil";
+  return p;
+}
+
+printf("%s\n", fun());
+
+char p[] = "string"; //just an array with "string"
+
+char *p1;
+char *p2 = NULL;
+
+p1 = "nikhil"; //ok pointer to constant string
+p2 = "vinay"; // ok pointer to constant string
+p1 = "putush"; // ok, pointer is not constant only string is constant(resides in read only data segment)
+
+p1[0] = 'x';  // segmentation fault
+p2[0] = 'x';  // segmentation fault
+
+// copy one structure to another
+*stptr1 = *stptr2 // if stptr1 and stptr2 are pointer to structure (shallow copy)
+struct1 = struct2  // shallow copy
+
+// constant pointer
+char* const p;
+// pointer to constant
+const char *p;
+char const *p;
+//constant pointer to constant
+const char* const p;
+char const * const p;
+
+char *p = "nikhil";
+sizeof(p) = 2
+strlen(p) = 5
+char p[] = "nikhil";
+sizeof(p) = 5
+strlen(p) = 5
+
+char *p[2] = {"nikhil", "vinay"};
+char p[2][20] = {"nikhil", "vinay"};
+char * far p, q;
+sizeof(p) = 4
+sizeof(q) = 2
+
+// two d array cell definition formulae
+a[n_row][n_col] = { {...}, {....}....};
+a[i][j] = *(a+(i*n_col)+j); // asked in interview
+a[i][j] = *(*(a+i)+j);
+
+Note: Arithmetic on void pointer is not permisible until type casting.
+Note: sizeof is evaluated at compile time.
+
+/* Program to write own printf */
+#include<stdio.h>
+#include<stdlib.h>
+#include<stdarg.h>
+void cal_result_file_print(FILE* fp, const char* fmt, ...) __attribute__ ((format (gnu_printf, 2, 3)));
+void CalResultFilePrint(FILE* fp, const char* fmt, ...) 
+{
+    va_list ap; 
+    va_start(ap, fmt);
+    if(fp){
+       vfprintf(fp, fmt, ap);  // instead of fp, we can have stderr, stdout
+    }   
+    va_end(ap);
+}
+
+int main()
+{
+  int a = 10; 
+  FILE *fp = NULL;
+  fp = fopen("hello.txt", "w");
+  CalResultFilePrint(fp, "%d %d\n", a, a); 
+  CalResultFilePrint(fp, "My name is %s\n", "nikhil");
+  CalResultFilePrint(fp, "vinay\n");
+  if(fp) {
+     fclose(fp);
+   }   
+  return 0;
+}
+
+// Link-List Message Que Push and Pop (using singly linked list and one pointer)
+// Good example of circular singly linked list
+
+void scpPushMessageTail(ScpMessage **listPtr, ScpMessage *msg)
+{
+    if (*listPtr == NULL) {
+        *listPtr = msg->next = msg;
+    } else {
+        msg->next = (*listPtr)->next;
+        (*listPtr)->next = msg;
+        *listPtr = msg;
+    }   
+}
+
+ScpMessage *scpPopMessageHead(ScpMessage **listPtr)
+{
+    ScpMessage *msg;
+
+    if (*listPtr == NULL) return NULL;
+    msg = (*listPtr)->next;
+    if (msg == *listPtr) {
+        *listPtr = NULL;
+    } else {
+        (*listPtr)->next = msg->next;
+    }
+    msg->next = NULL;
+
+    return msg;
+}
+
+// Get number of resources in a program (similar to ulimit)
+#include<stdio.h>
+#include<sys/resource.h>
+
+int main()
+{
+  struct rlimit lim; 
+  getrlimit(RLIMIT_NOFILE, &lim);
+  printf("Number of resources are - %d\n", lim.rlim_cur);
+  //for (fdIdx = 3; fdIdx < lim.rlim_cur; fdIdx++)
+  //     close(fdIdx);
+  return 0;
+}
+
+// Macro to close a file
+#define CLOSE_FILE_PTR(fptr)   \
+    do {                       \
+          if(fptr) {           \            
+            fclose(fptr);      \
+          }                    \
+    } while(0)
+
+// Find occurence of string in another string (c/c++)
+strstr(const char *str1, const char *str2)
+If str2 is found in str1 then it returns the pointer to the first character of first occurence else returns null.
+
+// Find occurence of a character in a string (c/c++)
+strchr(const char *str, int c)
+if character c is found in str then it returns the pointer to the first occurence of character in string else returns null.
+
+// Find occurence of a character in a string (c/c++)
+memchr(const void *str, int c, size_t n)  // here character passed as int and searched byte by byte
+if character c is found in str then it returns the pointer to the first occurence of character in string else returns null.
+It searches against memory block, so we need to give the length as third argument. In strchr, search stops when null char is found but it's not the samecase here.
+
+// Remove one or more consecutive character from a string (c++)
+string str = "nikhil"
+string str2 = str.substr(0,3) + str.substr(4,2) // output nikil (substr first argument is index and second is length)
+
+// map/multimap in c++ is developed by self balancing BST (like red-black tree) data structure
+// unordered_map in c++ is developed by hash table data structure (It has unordered key elements)
+// set in c++ is developed by BST data structure
+
+                        Map                   MultiMap
+==============================================================
+Search Time           logN                  Average- O(1), worst - O(N)
+Insertion Time        logN + Rebalance      Same as search
+Deletion  Time        logN + Rebalance      Same as search
+Ordering              Increasing(Default)   No Order
+
+// How set(multiset) is implemented internally
+
+// How List is implemented internally
+
+// How vector is implemented internally
+
+// Difference between set and vector
+
+================== BIT WISE OPERATION ===========================
+1. Reset least significant bit
+   n = n & (n-1)
+2. Extract the least significant set bit from a number
+   n2 = n & (-n)
+   Ex: n = 1010
+       n2 = n & (-n)  // n2 = 0010
+       n = n & (n-1)  // n = 1000
+       n2 = n & (-n)  // n2 = 1000
+3.
+4. Find out the set number of bits of a number
+   int count = 0;
+   while(n) {
+     count++;
+     n = n & (n-1);
+   }
+5. Check out if a number is power of two.
+   // numbe will have only one set bit
+   if ((n & (n-1)) == 0)  // power of two
+6. Find out the index of first set bit of an integer
+   log2(n & (-n)); 
+
+====================== Write a program to find min stack with o(1) space complexity =================
+Note: There is a beautiful property for two numbers x and y
+if x < y then (2*x-y) is always less than x
+ex: (1*2)-5 = -3 (less than 1)
+    (2*2)-5 = -1 (less than 2)
+    (3*2)-5 = 1  (less than 3)
+    (4*2)-5 = 3  (less than 4)
+
+we use this property for creating min stack push and pop functions.
+
+int minElement = 0;
+
+void push(int data) {
+  if(isFull())
+     // return with message
+ 
+  if(data >= minElement)
+     // insert data
+  else {
+     // insert (2*data - minElement) in stack , this value will always be less than data
+     // minElement = data
+  }
+}
+
+int pop() {
+  if(isEmpty())
+     // return with message
+  int data = stack[top--];
+  if(data < minElement) { // It means we have inserted the data in stack with special formula
+     // 2*current_min_element - previous_min_element = data;
+     // previous_min_element = 2*current_min_element - data;
+     int retval = minElement; // minElement was the coming value in special case
+     minElement = 2 * minElement - data;
+     return retVal;
+  }
+  return data;
+}
+
+====================== What is endianness and Write a program to checkout endianness of a system=========
+include <stdio.h> 
+int main()  
+{ 
+   unsigned int i = 1; 
+   char *c = (char*)&i; 
+   if (*c)     
+       printf("Little endian"); // 1 0 0 0 
+   else
+       printf("Big endian");    // 0 0 0 1
+   return 0; 
+} 
+
+====================== What is structure padding, why it is used, how to stop padding ====================
+
+Padding aligns structure members to "natural" address boundaries - say, int members would have offsets, which are mod(4) == 0 on 32-bit platform. Padding is on by default. It inserts the following "gaps" into your first structure:
+
+struct mystruct_A {
+    char a;
+    char gap_0[3]; /* inserted by compiler: for alignment of b */
+    int b;
+    char c;
+    char gap_1[3]; /* for alignment of the whole struct in an array */
+} x;
+
+Packing, on the other hand prevents compiler from doing padding - this has to be explicitly requested - under GCC it's __attribute__((__packed__)), so the following:
+
+struct __attribute__((__packed__)) mystruct_A {
+    char a;
+    int b;
+    char c;
+};
+
+would produce structure of size 6 on a 32-bit architecture.
+
+A note though - unaligned memory access is slower on architectures that allow it (like x86 and amd64), and is explicitly prohibited on strict alignment architectures like SPARC.
+
+On 32 bit machine, if a read cycle reads 4 byte then compiler needs more read cycle to read an integer if integer is splitted in two consecutive 4 bytes chunks.
+
+====================== Program to write own sizeof function======================
+#include<iostream>
+#define size_of(type) (char*)(&type+1) - (char*)&type
+using namespace std;
+int main()
+{
+   int x;
+   printf("%d" , size_of(x));
+   return 0;
+}
+
+=================== Program to swap even and odd bits ============================
+#include<iostream>
+using namespace std;
+int main()
+{
+   unsigned int x = 5; 
+   unsigned int even_bits = x & 0xAAAA;
+   unsigned int odd_bits  = x & 0x5555;
+   even_bits >>= 1;
+   odd_bits <<= 1;
+   cout<< (even_bits | odd_bits)<<endl;
+   return  0;
+}
+
+================= Write own memset =============================================
+void* my_memset(void *src , int x,  size_t size)
+{
+    unsigned char *loc = (unsigned char*)src;
+    unsigned int i = 0;
+    while( i < size)
+    {
+         *loc = (unsigned char)x;
+         loc++;
+         i++; 
+    }  
+    return src;
+}
+int main()
+{
+   int x ;
+   my_memset(&x , 1 , sizeof(x));
+   printf("%d", x);
+   return 0;
+}
+
+=================== Write own memvpy ================================================
+void* my_memcpy(void *dest , void *src,  size_t size)
+{
+    char *sr = (char*)src;
+    char *dst = (char*) dest;
+    while(size--)
+    {
+        *dst = *sr;
+        sr++; dst++; 
+    }
+    return src;
+}
+int main()
+{
+   int x = 10 , y = 89;
+   my_memcpy(&x , &y , sizeof(x));
+   cout<< x <<" " << y <<" "  << &x << " "  <<&y;
+   return 0;
+}
+
+================== Multiply two numbers using bitwise operation ============================
+#include<stdio.h>
+main()
+{
+  int a,b,result;
+  printf("nEnter the numbers to be multiplied :");
+  scanf("%d%d",&a,&b);         // a>b
+  result=0;
+  while(b != 0)               // Iterate the loop till b==0
+  {
+    if (b&01)                	// Bitwise &  of the value of b with 01
+    {
+      result=result+a;     	// Add a to result if b is odd .
+    }
+    a<<=1;                   	// Left shifting the value contained in 'a' by 1
+  			// multiplies a by 2 for each loop
+    b>>=1;                   	// Right shifting the value contained in 'b' by 1.
+  }
+  printf("nResult:%d",result);
+}
+
+================== Program to compress by its sequential occurence ======================
+#include <iostream>
+using namespace std;
+int main()
+{
+     char str[] = "WWWWCCCADDD";
+     char *read_ptr = str, *write_ptr = str;
+     char ch = str[0];
+     int count = 1 , i = 0;
+     while(*read_ptr != '\0')
+     {
+       *write_ptr  = ch;
+        if (*(++read_ptr) == ch)
+           count++;
+        else
+        {
+           *(write_ptr+1) = count + '0';
+           write_ptr += 2;
+           ch = *read_ptr;
+           count = 1;
+        }  
+     }     
+     *write_ptr = '\0';
+     cout<<str<<endl;
+     return 0;
+}
+
+================ FInd square root without using arithmetic operation ===============
+#include<iostream>
+using namespace std;
+int sqrt(int num)
+{
+   int i = 1;
+   int count = 0;
+   while(num > 0)
+   {
+      num = num - i;
+      count++;
+      i = i + 2;
+   } 
+      if ( num == 0 ) 
+     return count;
+   else 
+     return 0;
+}
+int main()
+{
+  int x= 64;
+  cout<<sqrt(x)<<endl;
+  return 0;
+}
+
+============= Add two numbers using bitwise operation(Half Adder) =================
+#include<iostream>
+using namespace std;
+int Add(int x, int y)
+{
+   while (y != 0)
+   {
+       int carry =  x & y;
+       cout<<"carry : " <<carry <<endl;
+       x = x ^ y;
+       y = carry<< 1;
+       
+       cout<< " Y : " <<y <<endl;
+   }  
+   return x;
+}
+int main()
+{
+  int x= 9 , y = 7;
+  cout<<x << " + " << y << " = " << Add(x , y)<<endl;
+  return 0;
+}
+
+================================= SAFE STRCPY ======================================
+
+char* strcpy_safe(char *dest, int size, char * src) {
+    if(!dest) {
+        pbLog("Errorcode ERROR: Destination ecode string is NULL\n");
+        return dest;
+    }    
+    if(!src) {
+        pbLog("Errorcode ERROR: Source string is NULL\n");
+        return dest;
+    }    
+    if(size <= 0) { 
+        pbLog("Errorcode ERROR: Size of buffer is 0 or less\n");
+        return dest;
+    }    
+    if(size > BUFFER_MAX_SIZE) {
+        pbLog("Errorcode ERROR: Size of buffer larger than max\n");
+        return dest;
+    }    
+    if(dest == src) return dest;
+
+    if(size >= strlen(src)) strcpy(dest,src);
+    else {
+        int i;
+        for(i = 0; i < size; i++)
+            dest[i] = src[i];
+        dest[++i] = '\0';
+        pbLog("Errorcode ERROR: Size of buffer too small\n");
+        pbLog("Errorcode ERROR: Truncating chars from err string\n");
+    }
+    return dest;
+}
+
+================================= SAFE STRCAT ======================================
+
+char* strcat_safe(char *dest, int size, char * src) {
+    if(!dest) {
+        pbLog("Errorcode ERROR: Destination ecode string is NULL\n");
+        return dest;
+    }
+    if(!src) {
+        pbLog("Errorcode ERROR: Source string is NULL\n");
+        return dest;
+    }
+    if(size <= 0) {
+        pbLog("Errorcode ERROR: Size of buffer is 0 or less\n");
+        return dest;
+    }
+    if(size > BUFFER_MAX_SIZE) {
+        pbLog("Errorcode ERROR: Size of buffer larger than max\n");
+        return dest;
+    }
+    if(strlen(dest) > BUFFER_MAX_SIZE) {
+        pbLog("Errorcode ERROR: Size of original dest string larger than buffer\n");
+        return dest;
+    }
+
+    if(size >= strlen(src) + strlen(dest)) strcat(dest,src);
+    else {
+        int i,j;
+        for(i = 0; dest[i] != '\0'; i++)
+            ;
+        for(j = 0; j < size-1; j++);
+            dest[i+j] = src[j];
+        j++;
+        dest[i+j] = '\0';
+        pbLog("Errorcode ERROR: Size of buffer too small for strcat\n");
+        pbLog("Errorcode ERROR: Truncating chars from err string\n");
+    }
+    return dest;
+}
+
+========================== MISCELLANEOUS ======================================
+int x = 2;
+char buf[252];
+sprintf(buf, "hello%d", x);
+snprintf(buf, sizeof(buf), "hello%d", x);
+
+======================= FORK () CALL =========================================
+fork() called once but returns twice. It returns zero to child process for successful
+creation and child process id to parent.
+Reason: We have two function getpid() to gets own pid and getppid() to get parent process
+pid. so, child can get any time own process id and parent process id.
+Parent can get own process id by getpid() but can't get child process id so child returns 
+process id to parent at the time of creation itself.
+
+pid = fork();
+if(pid == 0) {
+  // child
+}
+else {
+  // parent
+}
+
+====================== ORPHAN PROCESS =========================================
+A process whose parent is already exited without waiting for child process.
+Then child process becomes orphan process.
+
+===================== ZOMBIE PROCESS ==========================================
+If a process has finished its execution but still has entry in process table becomes zombie.
+Parent process has responsibility to remove entry to its child process from process table once
+child process finishes the execution. SO, if parent process is suspended or sleeping and child process
+completes the execution, child process becomes zombie.
+
+================= CREATE DAEMON PROCESS ========================================
+This process is a process whose parent is init only and it starts during system starts up.
+Runs as a background job to monitor something and no process has control over it.
+Ex: Some cron job, Java garbage collector
+
+int fd, pid, pip[2];
+
+/* make communication pipe, fork child, and close unused pipe ends */
+if (pipe(pip) < 0) ERR_THROW(0, "couldn't open pipe: %s", strerror(errno));
+if ((pid = fork()) < 0) {
+   ERR_THROW(0, "couldn't fork sub-process: %s", strerror(errno));
+}
+
+if (pid == 0) {
+        /* child process */
+        close(fd);
+        close(pip[0]);
+        parentPipe = pip[1];
+        // Below four lines are making child process daemon process.
+        if (flags & PBPID_CDTMP) ERR_ASSERT(chdir("/tmp") == 0);
+        if (flags & PBPID_UM2) umask(002);
+        if (flags & PBPID_CLSIN) ERR_ASSERT(freopen("/dev/null", "r", stdin));
+        if (flags & PBPID_CLSOUT) ERR_ASSERT(freopen("/dev/null", "w", stdout));
+        return;
+    } else {
+        /* parent process:  write pid, then wait for status from child */
+        close(pip[1]);
+        snprintf(buf, sizeof(buf), "%-10d\n", pid);
+        while (write(fd, buf, strlen(buf)) < 0) {
+            if (errno != EINTR) {
+                fprintf(stderr, "error writing lock file %s: %s\n",
+                            name, strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+        }
+        close(fd)
+        .......
+   }
+
+Note: If we fork the child process address space gets a copy of all opened file, socket and other resourcess.
+Even when a scipt is run from c code or from any other script. It forks internally to create a child process for running the script.
+
+==================== atexit(void(*fptr)(void)) ===========================
+
+We can register any function with atexit, it will get called whenever main function exits normall or
+exit() function gets called from some where in program. Means, it gets called at program termination.
+
+void clean()
+{
+  printf("cleaning\n");
+}
+
+int main()
+{
+  atexit(clean);
+  printf("started\n");
+  return 0;
+}
+
+/============= Search pattern======================================
+grep -Rn lapack --include="Make*"  // It will search in only file names started with Make
+grep -Rn * -l  // It will list the filenames
+grep -Rn *     // It will list all lines
+grep -Rin      // when i include, it makes case insensitive search
+
+cut -b 1,2,3 state.txt // -b means byte(one letter consists of a byte) it will print first three letter of each line of file
+cut -b 1-3,5-7 state.txt  // similar as above but print range based bytes(letters)
+cut -b 1- state.txt       // first byte to end byte
+cut -b -3 state.txt       // first byte to 3rd byte
+cut -c 2,5,7 state.txt    // -c stands for columns , will print 2nd, fifth, 7th column letter of each line
+cut -c 1-7 state.txt      // 1st to 7th column
+cut -c 1- state.txt       // 1st column to last column
+cut -c -5 state.txt       // 1st column to 5th column
+cut -d "delimiter" -f (field number) file.txt  // extract field seperated by delimeter
+cut -d " " -f 1 state.txt  // print first word separated by delimeter " "
+
+wc -l : Prints the number of lines in a file.
+wc -w : prints the number of words in a file.
+wc -c : Displays the count of bytes in a file.
+wc -m : prints the count of characters from a file.
+wc -L : prints only the length of the longest line in a file.
+
+/================= Padding Concept in C =======================================/
+64 Bit compiler has 32 bit r/w cycle, means 32 bit can be read in one clock cycle
+struct s { 
+    int i;     // 4 Byte
+    char ch;   // 1 Byte (Will be padded with 3 byte by compiler)
+    double d;  // 8 Byte
+};
+
+sizeof(struct s)  // 16 Byte
+
+Note: offsetof function provides the total offset byte from begining to starting of the element in structure
+size_t offsetof(type, member);
+
+offsetof(struct s, i)   // 0
+offsetof(struct s, ch)  // 4
+offsetof(struct s, d)   // 8
+
+Note: We can avoid structure padding by as below:
+
+struct s { 
+    int i; 
+    char ch; 
+    double d; 
+} __attribute__((packed));
+
+sizeof(struct s)  // 13 Byte
+
+/************* HUNGARIAN NOTATION ***********************************/
+strFirstName(string), txtFirstName(text), CAccount (class), 
+ixArray(array index)
+
+Book - Writing Solid Code
+
+/*********** HOW malloc/calloc/realloc/free works internally ********************/
+malloc: It creates contigous bytes of vitual memory using sbrk.  // sbrk or mmap is used allocate memory pages
+Simple example of malloc:
+
+#include <assert.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+void *malloc(size_t size) {
+  void *p = sbrk(0);
+  void *request = sbrk(size);
+  if (request == (void*) -1) {
+    return NULL; // sbrk failed.
+  } else {
+    assert(p == request); // Not thread safe.
+    return p;
+  }
+}
+
+Free: 
+void free(void *ptr);  // it free all the memory allocated by malloc/calloc
+By giving starting address of the memory we have no idea what size of memory was allocated by malloc/calloc.
+For every allocation, kernel mentain some meta data in form of linked list.
+struct block_meta {
+  size_t size;
+  struct block_meta *next;
+  int free;
+  int magic; // For debugging only. TODO: remove this in non-debug mode.
+};
+
+It has a different linked list freed space also.
+TO stop external fragmentation, all program executable is not loaded in RAM fully. Programs are created in pages and loaded in ram with help of
+page table. (If additional page is required, page fault is generated by process).
+Some pages are shared between two programs as well. (see the linux book).
+If we free some memory segment then three cases arise:
+1). Memory is freed but page is still in RAM   --- check out this
+2).
+3).  
+/*********** What is virtual and physical address (application/kernel) side ****************/
+
+/*********** What is volatile parameter (what is use of volatile in threading) *************/
+It prevents from compiler to optimize the code. Compiler doesnot optimize a volatile parameter.
+Objects declared as volatile are omitted from optimization because their values can be changed by code outside the scope of current code at any time. The system always reads the current value of a volatile object from the memory location rather than keeping its value in temporary register at the point it is requested, even if a previous instruction asked for a value from the same object. So the simple question is, how can value of a variable change in such a way that compiler cannot predict. Consider the following cases for answer to this question.
+
+Global variables within a multi-threaded application: There are multiple ways for threads communication, viz, message passing, shared memory, mail boxes, etc. A global variable is weak form of shared memory. When two threads sharing information via global variable, they need to be qualified with volatile. Since threads run asynchronously, any update of global variable due to one thread should be fetched freshly by another consumer thread. 
+Compiler can read the global variable and can place them in temporary variable of current thread context. 
+To nullify the effect of compiler optimizations, such global variables to be qualified as volatile.
+
+/************* What is compiler optimization ************************************************/
+
+Compiler optimizes the code at different level during code compilaion. Optimization level depends upon the option
+provided in compile command as -O1 or -O2 or -O3 etc.
+
+What is optimization?
+1. Supoose the below printf function is written 100 times in 100 consecutive lines.
+printf("My name is Nikhil\n");
+----------
+----------
+printf("My name is Nikhil\n");
+
+Compiler will optimize this 100 lines of code as below:
+for(int i = 0; i < 100; i++) {
+   printf("my name is Nikhil\n");
+}
+
+2. Look at below code;
+   char* str = "nikhil vinay";   // strlen = 12
+   for(int i = 0; i < strlen(str); i++) {
+     printf("%c\n", str[i]);
+   }
+   // As per for loop statement, at every condition check, strlen function will be called to calculate string length
+   // and then i will be compared with that. But, compiler will optimize this code as below to get rid of recuring
+   // string length calculation
+   for(int i = 0; i < 12; i++) {
+      printf("%c\n", str[i]);
+   }
+   
+/************* Miscellaneous *************************8/
+sizeof(int) = 4   // 32 bit compiler
+sizeof(int*) = 4  // 32 bit compiler
+sizeof(int) = 4   // 64 bit compiler
+sizeof(int*) = 4  // 64 bit compiler
+
+we can test with compiling -m32 bit option
+
+/*************** STRINGIFICATION **************************/
+#define STRINGIFY(x)   #x
+printf("%s\n", STRINGIFY(2));  // It prints 2
+printf("%s\n", #2); //compilation error
+When a macro parameter is used with a leading #, the preprocessor replaces it with the literal text of the actual argument, 
+converted to a string constant. Unlike normal parameter replacement, the argument is not macro-expanded first. This is called stringification.
+
+#define PASTE(a, b) a##b
+PASTE(print, f)("nikhil\n");  // It printd "nikhil"
+
+/************** MISCELLANEOUS *********************/
+char *p = "nikhil";
+sizeof(p) = 8 bytes (size of pointer);
+char p[] = "nikhil";
+sizeof(p) = 7
+char p[5] = "hi";
+sizeof(p) = 5
+
+/**************** getopt in C **************************/
+getopt is function to extract data from command line options while running a program.
+Ex: a.out -a "nikhil" -b 2
+while ((opt = getopt(argc, argv, "a:b:")) >= 0) {
+    switch(opt) {
+       case 'a':
+               ptr = optarg;  // ptr is char pointer;
+               break;
+       case 'b':
+               val = optarg;  // val is integer;
+               break;
+    }
+}
+
+For log options:
+Ex: a.out -a "nikhil" -b 2 --tf 3
+struct option longopts[] = {
+       { "tf", required_argument, NULL,'f'},
+       { 0, 0, 0, 0 }
+};
+
+while ((opt = getopt_long(argc, argv, "a:b:", longopts, NULL)) != -1) {
+     switch(opt) {
+       case 'a':
+               ptr = optarg;  // ptr is char pointer;
+               break;
+       case 'b':
+               val1 = optarg;  // val1 is integer;
+               break;
+       case 'f':
+               val2 = optarg; // val2 is integer;
+               break;
+    } 
+}
+
+/**************** quick sort function in c *************/
+
+void qsort (void* base, size_t num, size_t size,  
+            int (*comparator)(const void*,const void*));
+
+comparater could be default or we can write our own comparater function in case of elements of structures.
+
+/************ String/Malloc ***********************************/
+
+A very good article, if you don't remember:
+https://www.joelonsoftware.com/2001/12/11/back-to-basics/
+
+strlen always search of null terminator or 0 to find length of the string.
+char str[100];
+str = {0}; // strlength is zero, we can use this instead of memset for character array
+
+Note: (malloc + memset) is faster than calloc because (malloc + memset) use COW for setting zero to mem bytes.
+
+/************ A good article for C++ STL and other C++ contents **********************/
+
+https://thispointer.com/
+
+/*** Some Good Thoughts *************/
+1. What is guarded memory and how and why it is used.
+2. What is efiicient strcat.
+3. What is efficient code of strlen. Usual time complexity of strlen is o(n).
+   If we add one extra byte in begining of the string to store the string length then time complexity of my_strlen can be o(1). 
+
+/******* How to represent a rectangle box ***************/
+A rectangle box can be represented by two diagonal points only, no need to use all four points
+struct Point
+{
+  int x;
+  int y;
+};
+
+struct Rectangle
+{
+  Point ll;  // lower left
+  Point ur;  // upper right
+}
+
+Qn: If there are two rectangles - rectangle1 and rectangle2. How to check if rectangle1 is enclosed by rectangle2?
+
+if(rectangle2.ll.x <= rectangle1.ll.x && rectangle1.ur.x <= rectangle2.ur.x && rectangle2.ll.y <= rectangle1.ll.y &&
+   rectangle1.ur.y <= rectangle2.ur.y)
+   // rectangle1 is enclosed by rectangle2
+else
+   // rectangle1 is not enclosed by rectangle2
+
+/************ Some miscellaneous Points of float initialization *********************/
+
+float x = 0 has an implicit typecast from int to float.
+float x = 0.0f does not have such a typecast.
+float x = 0.0 has an implicit typecast from double to float
+
+double has 2x more precision then float.
+
+float is a 32 bit IEEE 754 single precision Floating Point Number1 bit for the sign, (8 bits for the exponent, and 23* for the value), i.e. float has 7 decimal digits of precision.
+
+double is a 64 bit IEEE 754 double precision Floating Point Number (1 bit for the sign, 11 bits for the exponent, and 52* bits for the value), i.e. double has 15 decimal digits of precision.
+
+/************* Ways to comment multilines in C/c++ ************************************/
+Method-1: /*    */
+Method-2: #if 0     #endif
+Method-3: #if <undefined macro>   #endif  // If macro is undefined, default it is 0 as value
+
+/*********** gnuplot is used to plot the images in c/c++ ***************/
+
+> cat /home/nvinay/Desktop/pattern_rot_1.dat
+
+#xlabel:pattern rotation angle (deg)
+#ylabel:correlation maximum
+-2.000000000e+00 +4.256776973e-01
+-1.875000000e+00 +4.562096933e-01
+-1.750000000e+00 +4.855416105e-01
+
+> cat pattern_rot1.plot
+
+set terminal png large
+set output "/home/nvinay/Desktop/pattern_rot1.png"
+set xlabel "pattern rotation angle (deg)"
+set ylabel "correlation maximum"
+plot	"/home/nvinay/Desktop/pattern_rot.dat" using 1:2, "/home/nvinay/Desktop/pattern_rot_1.dat" using 1:
+
+/**************** micro and nano notation in c/c++ *****************************/
+double x = y*1e6;  // macro meter
+double x = y*1e9;  // nano meter
+
+/************ size_t is formatted in printf ********************************/
+size_t x;
+printf("Size of variable is %zu\n", x);   // %u, %d don't work here
+
+Note: 
+Good practice to use snprintf instead of sprintf to populate buffer with a formatted message.
+int snprintf(char *str, size_t size, const char *format, ...);
+
+Char buffer[256];
+If buffer size is fixed and input string is bigger than buffer size then it will cause string overflow and can lead to segmentation fault.
+
+If snprintf will be used then there might input string will be truncated but will never lead to segmentation fault.
+
+/*************** Why do we declare extern variable in .h file ************************************/
+
+If we don’t make variable extern in header file and header file will be included in multiple file then variable will become file based local global variable in all the files which include header file and varibale change in one file won't reflect in others (same variable wont be shared).  So good practice is to declare extern variable in header and define in any of the source files.
+
+If a variable is declared and defined in any source file then also extern is useful.
+
+/*************** memcpy *************************************/
+
+memcpy(address_of_dest, address_of_src, sizeof(dest));
+In memcpy,  we need to pass size of destination ideally as if size of dest is bigger than size of src, it is taken care internall. And it makes safe copyto destination size overflow.
+
+/************ We can check for ENV variable *******************/
+
+int simulation_run_eseqd = (getenv("SIMULATION_RUN") != NULL) ? 1 : 0; 
+
+/*********** Something intereting during software restart task ******************************/
+
+// Find the directory location of running eseqd binay then sim2 script folder is located 
+// Eseqd binary folder - "/pinebrook/<system-arch-specific-folder>/bin/eseqd"
+// sim2 script folder - "pinebrook/bin/sim2"
+if(readlink("/proc/self/exe", eseqdbinPath, sizeof(eseqdbinPath)) != -1) {
+   logm( stderr, "connCmdSWrestart: eseqd bin path is not located\n" );
+}
+
+if(strlen(eseqdbinPath) > 0) {
+   token = strtok(eseqdbinPath, &delim);
+   while((token != NULL) && (false == PB_STREQ(token, "eseqd"))) {
+     if(strlen(token) > 0){
+        strcpy(dirarray[dircnt++], token);
+     }
+     token = strtok(NULL, &delim);
+   }
+}
+
+strcat(swrestartCmd, "/bin/sim2 restart");
+    
+// All socket fds of eseqd process need to be closed to reconnect with with cga/akt-sim safely
+// This process is getting killed by sim2 script so, we are closing all the fds from /proc/<eseqd_pid>/fd
+// directory instead of killing only socket fds.
+FILE *fp = NULL;
+char str[1024];
+int  fdlist[1024], fdcount = 0; 
+if((ret = system("ls /proc/self/fd > /tmp/eseqd_fd_list.txt")) < 0) { 
+    logm( stderr, "connCmdSWrestart: opening eseqd /proc/self/fd directory failed\n");
+}
+else {
+    if(NULL == (fp = fopen("/tmp/eseqd_fd_list.txt", "rw"))) {
+       logm( stderr, "failed to open %s file: %s\n",
+       "/tmp/eseqd_fd_list.txt", strerror( errno ) ); 
+    }
+    else {
+       memset(str, 0, sizeof(str));
+       memset(fdlist, 0, sizeof(fdlist));
+       while ( fgets ( str, sizeof(str), fp ) != NULL )
+       {
+          fdlist[fdcount++] = atoi(str);
+          memset(str, 0, sizeof(str));
+       }
+       fclose(fp);
+   }
+}
+
+// close all open FDs(except stdin, stdout and stderr) of eseqd process
+if(fdcount > 0) {
+  for(int cnt = 0; cnt < fdcount; cnt++) {
+     if(fdlist[cnt] > 2) {
+        close(fdlist[cnt]);
+     }
+  }
+}
+
+/***************** fscanf - beautiful function to read a file line by line and parse it ***********/
+
+FILE* fp = fopen(sim_module_file, "r");
+char modName[256], modVal[256];
+if(fp != NULL) {
+   while(fscanf(fp, "%s %*s %s", modName, modVal) == 2) {  // %*s means discard all strings between first and last string 
+     if(modName[0] == '#') 
+        continue;
+         DisableSimulationModule(modName, (atoi)(modVal));
+     }
+     fclose(fp);     
+   }
+}
+
+/*************** strtok - beautiful asset for string tokenization ********************************/
+
+int main() 
+{ 
+    char str[] = "Geeks-for-Geeks"; 
+  
+    // Returns first token 
+    char* token = strtok(str, "-"); 
+  
+    // Keep printing tokens while one of the 
+    // delimiters present in str[]. 
+    while (token != NULL) { 
+        printf("%s\n", token); 
+        token = strtok(NULL, "-");  // if token is some char variable(char var), we need to pass address as strtok(NULL, &var); 
+    } 
+  
+    return 0; 
+}
+
+Output:
+
+Geeks
+for
+Geeks
+
+/****************** Program to duplicate a string ********************************/
+
+char *GetStrDup(const char *o, const char *loc)
+{
+    if (o == NULL) return NULL;
+    return strcpy((char*)calloc(strlen(o)+1, sizeof(char)), o); 
+}
+
+/***************** How to pass multiple argument by one argument to a function **************/
+
+make all argument as a member of structure and pass that structure only to the function.
+
+/********************* Compilation Options (VVI) *****************************************/
+
+// Note: If we compile with option -c means don't run the linker.
+// In this case compilation will generate only assembler (.o) object, it will not create final executable
+// Ex: gcc -c test.c
+
+// -m32  // option to compile with 32 bit processor
+// -std=c99  // option to compile with specific version c compiler
+// -g        // compilation in debug mode
+// -O1, -O2, -O3  // Optimaization level
+// -o <file>  // to make specific file name of final executable
+// -lm        // link with math library if math.h is included
+// -lpthread  // linking with pthread library if pthread.h is included
+// -lnik     // means it will search for some library named libnik
+// -Werror   // warning will be considered as error
+// -Wall     // warning will be prited as warning only
+
+// Note: If we compile with -E option, we check preprocessed file with macro and other preprocessor expansion.
+   Ex: gcc -E test.h test.c > nik.txt
+
+// -std=c++11   // compile with c++11
+// -std=c++0x   // compile with c++11 or above
+
+gcc -S test.h test.c   // generates assembly code(.s)
+
+gcc -S test.h test.c -save-temps  // generates all files .ii, .s, .o
+
+/************** Beautiful concatenation example supported by C Language *********************/
+
+#define concat(a,b) a ## b
+
+int
+main (int argc, char **argv)
+{
+  concat (pri, ntf) ("Hello world\n");
+  exit (0);
+}
+
+/************* How to check stack is growing ? ****************************/
+
+Print address of any local data in recursive function or function calling function.
+
+/************* Function Pointer ******************************************/
+
+int func(int);
+int (*ptr)(int);
+ptr = func;
+ptr(5);
+
+Array of function pointer;
+int (*ptr[3])();
+int func1();
+int func2();
+int func3();
+
+ptr[0] = func1;
+ptr[0] = func1;
+ptr[0] = func1;
+
+ptr[0]();
+ptr[1]();
+ptr[2]();
+
+/************* Miscellaneous Bitwise concepts *********************/
+n & (n-1)  // reset right most set bit to zero.
+           // Provide most efficient code to find number of set bits
+        // Provide most efficient code to check if number is power of two (power of two will have one bit set) 
+
+n & (-n)  // extracts onlt right most set bit
+          // if n = 01110 then n & (-n) = 00010
+
+Code to check the index of all set bits of a number
+while(n) {
+  int x = n & (-n);  // extract last set bit only
+  cout<<"set bit index is "<<log(x)<<endl;
+  n = n & (n-1);  // reset right most set bit;
+}
+
+/*********** Program to display proc progress using carriage return (\r) **************/
+
+\r takes the printf cursor at the begining of current line.
+int main()
+{
+  printf("........10\r");
+  fflush(stdout);  \\ This is important, we need to flushout stdout before printing in same line
+  sleep(2);
+  printf("........20\r");
+  fflush(stdout);
+  sleep(2);
+  printf("........30\r");
+  fflush(stdout);
+  sleep(2);
+  printf("........40\r");
+  fflush(stdout);
+  printf("\n");
+}
+
+/***************** typedef of function *********************************/
+
+typedef int (func)(int a, int b); 
+
+func add;   // declaration of function, it needed because function is called before defined
+
+int main()
+{
+   int x = 10, y = 20; 
+   printf("addition is: %d\n", add(x, y)); 
+   return 0;
+}
+
+int add(int a, int b)
+{
+  return a+b;
+}
+
+/***************** typedef of function pointer *************************/
+
+void print() {
+  printf("nikhil\n");
+}
+
+typedef void(*fptr)();
+fptr fptrobj = print;
+fptrobj();
+
+fptr fptrobj2 = NULL;
+fptrobj2 = print;
+fptrobj2();
+
+/*** Any integer can be represented as power of two ********************/
+
+example: 3  = 0011 = 2^1 + 2^0
+
+second method: 
+Suppose number is 85. 
+n=1, keep multiplying n with 2 util it reaches the number or crosses it.
+(n=1)x2x2x2x2x2x2x2 = 128 so first number is 64 (because 128 is crossing 85).
+Now number = 85 - 64 = 21, repeat same with 21.
+(n=1)x2x2x2x2x2 = 32, so second number is 16 (because 32 is crossing 21).
+NOw number  = 21 - 16 = 5, repeat same with 5.
+(n=1)x2x2x2 = 8, so third number is 4 (because 8 is crossing 5).
+Now number = 5 - 4 = 1
+Fourth number is 1.
+
+Finally, 85 = 64+16+4+1
+
+/** As per descrete mathematics, any number can be represented with mix of prime numbers ****/
+
+/*********** How does a program run. (Check Balu's PPT) *********************/
+
+ldd a.out  // It shows all linking libraries needed by exec a.out
+           // if some libraries are missing, export in LD_LIBRARY_PATH
+
+static in a; // Until and unless it is not used, it just stays in a memory segment and points to /dev/null
+
+Minimum memory to run a program on 32 bit machine is 4 MB. // see balu's ppt
+As in begining all programs uses virtual page table only, once it executes then only it needs physical memory
+and demand paging is done by page fault.
+
+/************ Write program to create a bash shell ****************************/
+
+It is beautiful example of forking and execl family. See the related PPT.
+
+/************ How do all threads in a common program have different stack section? **************/
+
+Though it is managed by pthread library and pthread library uses a system call called CLONE() to clone the 
+stack memory for different threads.
+
+/************** Which is faster malloc/memset or calloc ******************************/
+
+malloc/memset : It will initialize the memory and set all memory to zero byte by byte so it is slow.
+                malloc will create a virtual entry in page table but once memset will be called, write operation
+                will take place so, it will initialize the memory in physical table and map wih virtual table 
+                then it will set all chunk of memory to 0 byte by byte. (COW)
+calloc: It will just create an entry in virtual page table. Once pointer will be used for write opration, 
+        it will create entry in physical memory and set the value to memory. Without any write operation, it
+        will be pointing somewhere on /dev/null which is considered to set as zero. (COW)
+        physical memory and write the value.
+
+malloc/memset is always slow compared to calloc as per above description.
+
+/****** When address of pointer is passed and collected by double pointer ? ***************/
+
+When pointer is null then it is not holding any address. If this null pointer is passed to a function then
+it should be passed as address of pointer because it will be initialized(allocated) in called function which
+will be local in the called function, if not passed by address of pointer.
+
+void function(char** str, int n) {
+  *str = (char*)malloc(sizeof(char) * n);
+  strcpy(*str, "nikhil');
+}
+
+char* str = null;
+function(&str, 7); 
+
+/******** What is uintptr_t? What is the use of this ? ************************/
+
+uintptr_t is an unsigned integer type which is capable to store a pointer. It typically means that it is the 
+same size as a pointer.
+A common reason to want an integer type that can hold an architecture's pointer type is to perform integer
+specific operations on pointer or to obscure the type of a pointer by providing it as an integer handle.
+
+Ex: Used in xor linked-list(memory efficient linked-list) for XORing two address
+Node* (Node* add1, Node* add2) {
+    return (Node*) ((uintptr_t)(add1) ^ (uintptr_t)(add2));
+}
+
+Note: typecasting to uintptr_t is not mandatory but it makes safe on different architecture. It makes 
+architecture independent.
+
+/********************** some file/dir reated function in c ****************************/
+
+> rename is used to change the existing file name without changing its contents.
+
+int rename (const char *old_name, const char *new_name);
+
+> mkdir is used to create a directory
+
+/*************** How to make generic c/c++ function arguments (open to extend arguments) *****************/
+
+We all know c++ has flexibility to have an default val parameter in function which makes the function open
+to extend till some extent.
+Example: void func(cha a, int b);
+In future, if this function needs to be added one more parameter and this function gets called from multiple 
+places and multiple files then we can modify it as - 
+void func(cha a, int b, int c=0);
+It will work for all function calls. Though this method also has some limitation as adding more number of 
+default parameter is not good API designing.
+
+In C language, we don't have flexibility of default parameters so, it's problematic if we need to add any 
+extra argument in future. It will affect all the function calls.
+So, best API designing is just have a structure as argument in function. Later we can add new data member
+in the structure if additional parameter needs to be passed to structure.
+
+Ex: 
+typedef struct param_list_s {
+  int a;
+  char b;
+} param_list_t;
+
+voif func(param_list_t params);
+
+If we need to add one additional arg - bool isDone, we will just modify the structure and it will work for all
+function calls.
+
+typedef struct param_list_s {
+  int a;
+  char b;
+  bool isDone;
+} param_list_t;
+
+The one liner change is sufficient to make this change.
+This is the best way design an API in c and C++.
+
+/********** How to print system errors to console in our code ********************/
+
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+
+int main () {
+   FILE *fp;
+
+   fp = fopen("file.txt","r");
+   if( fp == NULL ) {
+      printf("Error: %s\n", strerror(errno));  // strerror is string error, it reads the system error buffer
+                                               // to get the error message
+   }
+   
+   return(0);
+}
+
+Output: "Error: No such file or directory" //(if file.txt is not present)
+
+
+/********************** fnmatch in c/c++ (for pattern matching) ************************/
+
+fnmatch is very powerful API for pattern matching in c/c++. It is similar to regex for pattern matching.
+It is defined in <fnmatch.h>.  [Got an example in temperature thread]
+If pattern matches, it returns 0.
+
+#include<fnmatch.h>
+
+int main()
+{
+
+  //char *pattern = "status.eye*.id";
+  char *pattern = "status.eye[abc]-[def]*.id";
+  //char *string = "status.eye12.id";
+  char *string = "status.eyeb-fnikhil.id";
+
+  if(!fnmatch(pattern, string, 0)) {
+    printf("Pattern is matching\n");
+  } else {
+    printf("Pattern didn't match\n");
+  }
+
+  return 0;
+}
+
+/********** What is difference between #if MACRO, #if MACRO 1 and #if MACRO == 1 ****************/
+
+We have many ways to define macros which is preprocessed during compilations.
+#ifdef X
+#ifndef X
+#undef X
+#if X
+#if !(X)
+#if X==0
+
+etc..
+
+Note: If we have defined macro in .h or .x file as below:
+#define X 1
+
+#if X
+  //...
+#else
+  //...
+#endif
+
+We can't define/undefine X by makefile or commandline build.
+
+Note:
+If we have coded like below then we can control macro defined/undefined at time of code building
+
+File(test.cpp)
+-------------
+#include<iostream>
+using namespace std;
+
+int main()
+{
+#ifdef TEST1
+  cout<<"TEST1 is defined"<<endl;
+#endif
+  return 0;
+}
+
+File(Makefile):
+--------------
+CC = g++ 
+CFLAGS = -O1 
+test.exe: test.cpp
+        $(CC) $(CFLAGS) -DTEST1 -o $@ test.cpp   // -DTEST1 is used to define the macro TEST1 in source file.
+
+/************* What is phony target in makefile ? *******************************/
+
+By default, Makefile targets are "file targets" - they are used to build files from other files. Make assumes its target is a file, and this makes writing Makefiles relatively easy:
+
+foo: bar
+  create_one_from_the_other foo bar
+However, sometimes you want your Makefile to run commands that do not represent physical files in the file system. Good examples for this are the common targets "clean" and "all". Chances are this isn't the case, but you may potentially have a file named clean in your main directory. In such a case Make will be confused because by default the clean target would be associated with this file and Make will only run it when the file doesn't appear to be up-to-date with regards to its dependencies.
+
+These special targets are called phony and you can explicitly tell Make they're not associated with files, e.g.:
+
+.PHONY: clean
+clean:
+  rm -rf *.o
+Now make clean will run as expected even if you do have a file named clean.
+
+In terms of Make, a phony target is simply a target that is always out-of-date, so whenever you ask make <phony_target>, it will run, independent from the state of the file system. Some common make targets that are often phony are: all, install, clean, distclean, TAGS, info, check.
+
+Note: We can run a script by making target as phony. Without making target as phony also we can achieve the same
+but it will fail only if any file will be present in the folder with same target name.
+
+/************* How to split print lines in c/c++ ? ******************************/
+
+printf("my name is
+         nikhil\n");   // Error
+printf("my name is"
+       " nikhil\n");   // prints - "my name is nikhil"
+
+cout<<"my name 
+       is nikhil"<<endl;   // Error
+cout<<"my name"
+       " is nikhil"<<endl; // prints - "my name is nikhil"
+
+/**************** Macro Important *****************************/
+
+#define DO_IT (a, b) (a * b)   // error, macro splits after space, here motiv eis not fulfilled
+
+#define DO_IT(a, b)  (a * b)   // correct
+
+Note: Macro can be defined at any part of a file (Ex: Inside a function or any where, macro is not specific
+      to function, its specific to file, once it is defined, after that line, it is valid for all lines in 
+      the file.)
+
+/*************** How to find the folder where core dump file is generated ***********/
+
+/etc/sysctl.conf  -> This file has location to create coredump file and pattern of core dump file
+Example:
+kernel.core_pattern = /tmp/core-%e-%s-%u-%g-%p-%t (inside /etc/sysctl.conf)
+
+Note: If executable has been compiled with -g option then we can see the file line number with stack frame
+ details by backtracing after attaching core to gdb. [ source file path is not required because if it is 
+ compiled with -g option, it hsa all the details.]
+
+gdb <pid> <core-file>
+
+or
+
+gdb -p pid
+> core <core-file>
+> where
+> bt
+
+If we need to debug line by line after attaching the process then source file path is required with gdb.
+
+attaching process to gdb:
+gdb -p pid
+gdb -p `pidof <process_name>`
+gdb process_name
+
+/********** Why compilation needs to be done with -g option for gdb *********************/
+
+Please look into the above question's answer
+
+/**************** what is sheybang and diferent shell *******************************8/
+
+#!/bin/bash
+#!/bin/sh
+#!/usr/bin/perl
+
+shey bang is used to run the sctipt in the mentioned environment/shell
+
+we can run any shell command by directly going to perticular shell or environment.
+> bash
+> run shell command/script
+
+> python
+> run python command
+
+Note: if we have sheybang for python is included in file.py file then we can run directly as ./file.py.
+      if we dont have sheynbang for python then it needs to be run as python ./file.py
+
+Note: There different kinds of shells those are present in /bin/ folder
+      bash - bash shell 
+      dash - dash shell , faster than bash but some basic functionality as pushd, popd are not present
+      sh - korne shell, it is usualy a soft link in /bin folder which pointes to bash or dash
+      system(<command>) in c code uses /bin/sh to execute the commands.
+
+/***************** shasum ***********************************/
+shasum is also a technique to use get hash similar to md5sum. shasum is used by git to store hash of files.
+
+

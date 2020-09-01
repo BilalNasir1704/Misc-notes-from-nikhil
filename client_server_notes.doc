@@ -1,0 +1,3 @@
+/******************** CLIENT SERVER NOTES *****************************/
+
+lsof -i | grep port number  // shows server details listening at a perticular port

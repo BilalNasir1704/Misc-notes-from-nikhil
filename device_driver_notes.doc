@@ -1,0 +1,31 @@
+/******************* DEVICE DRIVER NOTES ****************************/
+lsmod | grep <module name>- gives driver name, major and minor number 
+mknod /dev/<name> <char/block> <major-number> <minor-number>
+
+lsmod  // List out all device driver modules
+insmod <driver_name>.ko  // install device driver module
+rmmod  <driver_name>     // remove device driver module
+
+dmesg -> display all kernel ALERT, INFO etc message print on stdout by 'printk' function
+/var/log/syslog - > This is also used to see kernel mesage
+/var/log/messages - > This is also used to see kernel mesage
+
+Note:
+uname -a  // Displays all linux kernel details
+uname -r  // Displays linux kernel version
+
+For building linux driver .ko object, we need linux kernel build directory
+
+================= Make File Entry To Build .ko ==========================
+obj-m+=mydriver2.o
+ 
+all:
+         make -C /lib/modules/$(shell uname -r)/build/ M=$(PWD) modules   // For building driver code
+         $(CC) myprog.c -o test                                           // For building local c code which uses driver
+clean:
+        make -C /lib/modules/$(shell uname -r)/build/ M=$(PWD) clean      // For cleaning driver object build
+        rm test                                                           // For cleaning local c code object
+
+==========================================================================
+
+

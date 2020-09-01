@@ -1,0 +1,395 @@
+/**************** PERL  NOTES ****************************/
+#!/usr/bin/perl
+use strict; 
+use warnings; 
+use File::Path;
+use File::Basename;
+use Socket ;
+use POSIX;
+use Switch;
+use Getopt::Long qw(GetOptions);
+
+/************** Compile Perl File *********************/
+perl -c <file>
+
+/************** Execute perl file *********************/
+perl file.pl
+./file.pl
+
+/*********** Commenting in perl script ****************/
+#       // for single line comment
+=pod   // used for multiple line comment
+=cut
+
+Note: #!/usr/bin/env python    // for python
+      #! /bin/sh               // for shell script
+
+use constant MAX_INSTANCE => 100;  // for constant
+
+my $var;   // local and global scalar variable
+our $va;   // global scalar variable
+
+my $setup_dir = $ENV{'HOME'};  // get environment variable
+
+my @ESEQ_PARMS = ("hi", "hello");  // array
+
+
+/************* DO WHILE ***************************************/
+do {
+  //
+}while(<cond>);
+
+/************ Calling Subroutine (function) ***************/
+
+$esqport = get_port(0);
+
+sub get_port {
+  my $in_var = $_[0];
+  my $my_port;
+  // do something
+  return $my_port;
+}
+
+/****************** SET ENVIRONMENT VARIABLE ********************/
+ $ENV{BITMAP_USE_UIO}    = 1;
+
+/******************* IF ELSE ***********************************/
+if($eyes_start_pattern eq "range") 
+{
+}
+else
+{
+}
+
+NOte: eq is used for string.  // eq, ne, cmp etc
+      == is used for integer, float etc; // ==, != , &&, ||, &, | etc
+      ++, --, +, -, * arithmetic operators are valid.
+
+/********************* FILE OPERATION ****************************/
+my $wd = getcwd();  // This perl function gives current working directory
+open $fh, '>>', $eseq_parm_file or die "can't open parm file $!";
+while (my $row = <$fh>) {
+  chomp($row);
+  ($eye, $host) = split('\s+', $row);
+}
+close($fh);
+
+>  // write only mode
+<  // read read mode
+>> // append mode
++> // read write mode
++< // write read mode
+
+open FH, $remote_config or die "Couldn't open remote configuration file @ $remote_config\n";
+
+/************** COncatenate the string **************************************/
+$sim_cur_instance = INSTANCE_PREFIX.$instance_num;
+print "My name is".$name;
+
+
+opendir(DIR, $ENV{'HOME'});
+@dirs = grep(/^SIM-INSTANCE/,readdir(DIR));
+closedir(DIR);
+
+foreach $dir (@dirs) {
+   // each element of array will be $dir
+}
+
+foreach (@DIR) {
+   // each element of array will be $_
+}
+
+Note: next; is used in any loop as continue; in c loop.
+/*************** Check for existence of a file *********************/
+if (-e $mypath)  // checks till file name
+if (-f $mypath)  // checks till directoy name
+
+/*********** Run some script by system command *********************/
+system("./sim_expose.sh "." -p ".$eseqport." -a ".$alignarg." -c ".$expose_count); // it's a blocking call, forks child process
+
+
+NOte: exit(1) is used to kill the perl script and exit form execution
+
+/*********** Passing argument in perl script ***********************/
+
+./sim2 start <instance num> <num eyes> [-i odd|even|oddeven] [-r remote-config-file] [-e eseqd] [-h cga-hostname] [-p cga-portnum]
+
+./sim2 start 1 2  // sim2 is perl script
+
+main();  // It should be somewhere in perl script, it gets called first
+
+sub main {
+  // Perl arguments start with index 0 and collected in @ARGV array
+  // Total argument count is $#ARGV+1    
+  // In above case, $#ARGV+1 = 3, $ARGV[0] = "start", $ARGV[1] = 1, $ARGV[2] = 2 
+}
+
+/**************** Find length of an array ************************/
+my @arr = (.......);
+my $array_length = $#arr+1; // first method;
+foreach (@array)            // second method;
+{
+  count++;
+}
+
+/*************** FInd number of character, word and lines in a file ************/
+open(FILE, "<file.txt") or die "Could not open file: $!";
+
+my ($lines, $words, $chars) = (0,0,0);
+
+while (<FILE>) {
+    $lines++;
+    $chars += length($_);                // length provides length of a string;
+    $words += scalar(split(/\s+/, $_));
+}
+
+print("lines=$lines words=$words chars=$chars\n");
+
+/***************** Write something on a file in perl **************************/
+//Open a file handler $fh in write mode
+print $fh "instance_number:".$instance_num." num_eyes:".$num_eyes."\n";
+
+
+
+
+/***************** Use of split function in perl ******************************/
+
+foreach $dir (@dirs) {
+       $sim_start_file = $ENV{'HOME'}."/".$dir."/amat/sim_restart.tmp";
+       if (-f $sim_start_file) {
+           open FH, $sim_start_file or next;
+           while(my $row = <FH>) {
+                 chomp($row);
+                 if (index($row, "instance_number") != -1) {
+                     $instance_detail = (split ' ', $row)[0];
+                     $instance_num = (split ':', $instance_detail)[1];
+                 }
+                 if (index($row, "num_eyes") != -1) {
+                     $eyes_detail = (split ' ', $row)[1];
+                     $num_eyes = (split ':', $eyes_detail)[1];
+                 }
+                 if(index($row, "eye_range") != -1) {
+                     $eyes_start_pattern = "range";
+                     $eye_range = (split '=', $row)[1];
+                     @eyes_start_range_details = split /\|/, $eye_range;
+                 }
+                 if (index($row, "remote_config") != -1) {
+                     $remote_config = (split ':', $row)[1];
+                 }
+                 if (index($row, "eseqd") != -1) {
+                     $eseqd_start = (split ':', $row)[1];
+                     $cga_hostname = (split ':', $row)[2];
+                     $cga_port = (split ':', $row)[3];
+                 }
+           }
+           close FH;
+           system("rm ".$ENV{'HOME'}."/".$dir."/amat/sim_restart.tmp");
+       }
+  }
+
+/************************* HASH IN PERL ********************************88
+A hash is a set of key/value pairs. Hash variables are preceded by a percent (%) sign. To refer to a single element of a hash, you will use the hash variable name preceded by a "$" sign and followed by the "key" associated with the value in curly brackets
+
+my %data = ('John Paul', 45, 'Lisa', 30, 'Kumar', 40);
+
+print "\$data{'John Paul'} = $data{'John Paul'}\n";
+print "\$data{'Lisa'} = $data{'Lisa'}\n";
+print "\$data{'Kumar'} = $data{'Kumar'}\n";
+
+Output:
+$data{'John Paul'} = 45
+$data{'Lisa'} = 30
+$data{'Kumar'} = 40
+
+Creation Of Hash:
+Method-1:
+
+$data{'John Paul'} = 45;
+$data{'Lisa'} = 30;
+$data{'Kumar'} = 40;
+
+Method-2:
+
+%data = ('John Paul', 45, 'Lisa', 30, 'Kumar', 40);
+or
+%data = ('John Paul' => 45, 'Lisa' => 30, 'Kumar' => 40);
+
+Extracting slices of a hash:
+
+%data = (-JohnPaul => 45, -Lisa => 30, -Kumar => 40);
+@array = @data{-JohnPaul, -Lisa};
+
+Extract keys and values of a hash:
+
+%data = ('John Paul' => 45, 'Lisa' => 30, 'Kumar' => 40);
+@names = keys %data;
+@agess = values %data;
+
+Checking for existence:
+
+if( exists($data{'Lisa'} ) ) {
+   print "Lisa is $data{'Lisa'} years old\n";
+} else {
+   print "I don't know age of Lisa\n";
+}
+
+Get hash size:
+
+@keys = keys %data;
+$size = @keys;
+
+# adding an element to the hash;
+$data{'Ali'} = 55;
+
+# delete the same element from the hash;
+delete $data{'Ali'};
+
+/**************** MIscellaneous ***********************/
+my $exit_code=system($runCmd);
+
+if($exit_code!=0)
+{
+  print "Command $runCmd failed with an exit code of $exit_code.\n";
+  exit($exit_code >> 8);  // here $exit_code will be 256, after shifting right by 8 bits it becomes 1
+}
+else
+{
+  print "Command $runCmd successful!\n";
+}
+
+Note: last; is used instead of break; in perl
+      next; is used to move next record in a loop in perl
+
+/**************** Miscellaneous *******************************/
+$status_file = $ENV{'HOME'}."/".$dir."/amat/status.tmp";
+if (-f $status_file) {
+    open FH, $status_file or next; 
+    while(my $row = <FH>) {
+    if (index($row, "host") != -1) {
+        $host2 = (split ' ', $row)[1];  // $row is "nikhil hello:vinay" then $host2 is "hello:vinay" here
+        ($host, $name) = split(':', $host2);  // Now $host is "hello" and $name is "vinay"
+    }
+    }
+}
+
+/******************* Run system command (example grep system command to check process) and eliminate entry of grep from output **********/
+
+system("ps -eaf | grep <process_name> | grep -v grep");
+
+/******************* Run system command and don't show the result of system command on output terminal ***************/
+
+system("ps -eaf | grep <process_name> | grep -v grep >/dev/null 2>&1");
+
+/******************* Difference between system command and qx command *******************************/
+
+
+/************************* Miscellaneous Concept ********************************/
+
+Arguments are passed in called function, default pass by reference.
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my $i;
+my $x = 210;
+print $x."\n";
+
+callsub($x);
+print $x."\n";
+
+my @g_arr = callsub2();
+foreach $i ( @g_arr)   # or foreach my $i (@g_arr) if not defined $i earlier
+{
+  print $i."\n";
+}
+
+sub callsub
+{
+ # my $y = @_;   // here $y will become 1, it is number of argument.so, we need to keep $y in bracket to collect the proper value. 
+  my ($y) = @_; 
+  $_[0] = 3;     # It is changing the global variable $x to 3 as it is passed by reference default.
+  $y = 4;        # It wont change global $x as it is local to this subroutine
+  print $y." in my sub \n";
+}
+
+sub callsub2 
+{
+  my @arr = (1, 2, 3); 
+  return @arr;   # return local array
+}
+
+Note: check shift in array
+      We can insert elements in array by using push.
+      my @arr;
+      push (@arr, 10);
+      push (@arr, 20);
+Note: length function gives the length of a string.
+     my $str = "nikhil";
+     my $len = length($str);
+
+/**************************** Miscellaneous (substr) in perl****************************/
+
+An expression, an offset value, a length and a replacement value
+It's time to confess something. The string we've been using in our examples is an old typing exercise. The original typist's example assumed that only good men could come to the aid of their party! So let's supply the word 'men' as the fourth argument, and see that substr() then modifies $string, returning it to its old-fashioned form.
+
+  my $string = 'Now is the time for all good people to come to the aid of their party';
+  my $fragment =  substr $string, index($string, 'people'), 6, 'men';  
+                  // <orig_string>, <start_index_of_substr>, <length_of_substr>, <replacement_str(optional)>
+  print "  string: <$string>\n";
+  print "fragment: <$fragment>\n";
+
+  Output:
+  string: <Now is the time for all good men to come to the aid of their party>
+  fragment: <people>
+
+/*********************** Miscellaneous (how to return from a subroutine) **********/
+
+Strictly speaking, a Perl subroutine always returns a list. It is up to the caller how it interprets that list.
+
+Sometimes that list is empty.
+
+sub empty_list {
+  ...
+  return;
+}
+Often it contains a single element
+
+sub single_element {
+  ...
+  return 'a single value';
+}
+
+my $var = single_element();
+More interesting things happen when you return multiple elements. Sometimes you return a known number of values.
+
+sub four_values {
+  ...
+  return 1 .. 4;
+}
+You can assign those values to a list of scalar variables.
+
+my ($x1, $x2, $x3, $x4) = four_values();
+You can assign those values to an array.
+
+my @array = four_values();
+You can assign them to a hash (although that doesn't make much sense in this case).
+
+my %hash = four_values();
+Or you can assign them to a combination of the two.
+
+my ($x1, $x2, @array) = four_values();
+Because of the way that list assignment works in Perl any aggregate variable will use up any remaining values in the returned list. So you'll want to have all the scalar variables at the front of the list and you can only every one aggregate variable in the assignment. You can get round that second restriction by returning references to values (because references are always scalar variables).
+
+So, to answer your original question. You can return a scalar and an array, but it's important to realise that all of the values will be "flattened" into a single list as they are returned and it's up to your caller to extract the scalar value from the start of the returned list.
+
+sub scalar_and_array {
+  ...
+  return $scalar, @array;
+}
+
+my ($other_scalar, @other_array) = scalar_and_array();
+
+/********************** Miscellaneous *********************/
+
+my @array;   // will create an empty array.
+@array = (); // will empty an existing array.

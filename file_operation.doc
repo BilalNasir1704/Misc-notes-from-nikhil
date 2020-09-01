@@ -1,0 +1,150 @@
+/****************  FILE OPERATION IN C *************************/
+FILE *fp = fopen("file_name", "r");  // if file is not opened some how, it will return NULL
+// opening modes - r (read), w(write), rw (read/write), a(append), r+, w+
+// If you want to portably read/write text files on any system, use "r", and "w" in fopen(). That will guarantee that the files are written and read properly. If you are opening a binary file, use "rb" and  "wb", so that an unfortunate newline-translation doesn't mess your data.
+
+fclose(fp); // it only closes the file, doesn't set file pointer to null.
+
+fseek(fp, <+/-pos>, offset); //offset: SEEK_CUR, SEEK_END(end of file), SEEK_SET (begining of the file)
+                             // offset are int type
+fseek(fp, 0, SEEK_END);  // fp will point to EOF not to last character
+fseek(fp, -1, SEEK_END);  // fp will point to last character(that could be even new line)
+
+int feof(FILE *fp)   // return non zero at EOF else returns zero
+
+int fpstatus = lseek(fp);
+
+#define EOF -1   // in library
+int getc(FILE *fp)  // used to read a character from a file
+char ch = getc(fp);
+int putc(int char, FILE *fp) // used to print a character into a file
+putc(ch, stdout);
+
+int fgetc(FILE *fp)  // similar to getc
+int fputc(int char, FILE *fp)  // similar to putc
+
+int fputchar(int c) // used to write a character on output screen, don't insert new line at end of character
+puts("nikhil");     // used to write a string on stdout, default insert a new line at end of stringi
+
+char buf[252];
+gets(buf);   // It reads a line (until '\n') from stdin
+fgets(buf, sizeof(buf), fp);  // It reads line by line from a file
+fputs(buf, fp);   // It writes buf string to a file.
+
+/******** Write a program to copy one file content into another file *************************/
+FILE *fpread = NULL, *fpwrite = NULL;
+fpread = fopen("input.txt", "r");
+fpwrite = fopen("output.txt", "w");
+char buf[251];
+while(!feof(fpread)) {
+   memset(buf, 0, sizeof(buf));
+   fgets(buf, sizeof(buf), fpread);
+   fputs(buf, fpwrite);  
+}
+
+fclose(fpread);
+fclose(fpwrite);
+
+/********* Write a programm to count number of letters, number of words and number of lines in a file */
+  
+int letter_count = 0, word_count = 0, line_count = 0;
+FILE *fp = fopen("input.txt", "r");
+char ch;
+while((ch =fgetc(fp)) != EOF) {
+  if((ch != ' ') && (ch != '\n')){
+     letter_count++;
+  }
+  else if(ch == '\n') {
+    line_count++;
+  }
+  else if(ch == ' ') {
+    word_count++;
+  }
+}
+
+/********* write a c program to check if a file exists in linux folder **********************************/
+
+Method-1 (Intuitive Solution):
+
+FILE *fp = NULL;
+if((fp = fopen("file.txt", "r")) == NULL) {
+   printf("file is not present\n");
+}else {
+   printf("file is present\n");
+   fclose(fp);
+}
+
+Note: we need to open a file in read mode because, write mode opens a file even file is not present in system.
+This is little heavy call because of opening a closing a file only to check a file existence.
+
+Method-2 :
+
+#define FILE_EXISTS(f)                           \
+    do {                                         \
+         if( access( f, F_OK ) != -1 ) {         \
+            fexists = 1;                         \
+         }                                       \
+         else {                                  \
+            fexists = 0;                         \
+         }                                       \
+    } while(0)
+
+/**************** fprintf (to write a sentence in a file ) ****************/
+   char sentence[1000];
+   FILE *fptr;
+
+   fptr = fopen("program.txt", "w");
+   if(fptr == NULL)
+   {
+      printf("Error!");
+      exit(1);
+   }
+   
+   printf("Enter a sentence:\n");
+   gets(sentence);
+
+   fprintf(fptr,"%s", sentence);
+   fclose(fptr);
+
+/================ fscanf to extracted read from a file ================/
+fscanf(fp, "%d %s %s %lf", &int_data, str_data, str_data_2, &double_data);
+
+/================ Writing on a file (VVI) =============================/
+
+When write on a file (fprintf, fputs, fputc etc), actually we write on a file on disc. So, all contents written
+a file is stored in a buffer. Once we do fclose, fflush then only contents goes into the file.
+
+Note: Once program dies without fclose() and fflush(), contents comes to the file after some times.
+
+Example: 
+
+int main() {
+  FILE* fp = fopen("/home/nvinay/Desktop/check.txt", "w");
+  if(fp) {
+     while(1) {
+       pbCalLogPrint(fp, "%s\n", "hello");  // "hello" is written in infinite loop, while program is running
+       // fflush(fp);
+       sleep(2);                            // we open the file to see the data, then it shows zero data
+     }                                      // once we do fflush, it starts showing the data in file on runtime.
+  } else {
+    printf("file is not opened\n");
+  }
+  fclose(fp);
+  return 0;
+}
+
+/************ Writing on disk **************************/
+
+When we open a file, usually it searches for a file on disk then it opens a buffer in RAM corresponding to that
+file pointer. It keeps writing into the buffer pointed by file pointer. Once file gets closed after writing,
+flushing of buffer happens. Flushing of buffer transfers all the data written into buffer to the real file on
+disk.
+
+If we want the disk file updated while writing, we need to call explicitly:
+fflush(fp);
+
+But, it is caostly as every flush means writing the buffer data to real disk file is costly.
+
+/=====================================================================================================================/
+                                FILE HANDLING in C++
+/=====================================================================================================================/
